@@ -26,7 +26,7 @@ export module Utils {
     return null;
   }
 
-  export function findFirst(doc, path) {
+  export function findFirst(doc, path): xpath.SelectedValue {
     const nodes = xpath.select(path, doc);
     if (nodes.length === 0) {
       throw "could not find xpath " + path;
@@ -34,9 +34,9 @@ export module Utils {
     return nodes[0];
   }
 
-  export function findChilds(node, localName, namespace) {
+  export function findChilds(node, localName, namespace): Node[] {
     node = node.documentElement || node;
-    const res = [];
+    const res: Node[] = [];
     for (let i = 0; i < node.childNodes.length; i++) {
       const child = node.childNodes[i];
       if (child.localName === localName && (child.namespaceURI === namespace || !namespace)) {

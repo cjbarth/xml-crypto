@@ -26,7 +26,7 @@ import * as crypto from "crypto";
 
 export class SignedXml {
   idMode?: "wssecurity";
-  idAttributes?: string[];
+  idAttributes: string[];
   /**
    * A {@link Buffer} or pem encoded {@link String} containing your private key
    */
@@ -923,7 +923,7 @@ export class SignedXml {
         "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
       );
     } else {
-      Object.values(this.idAttributes).some((idAttribute) => {
+      this.idAttributes.some((idAttribute) => {
         attr = Utils.findAttr(node, idAttribute, null);
         return !!attr; // This will break the loop as soon as a truthy attr is found.
       });
