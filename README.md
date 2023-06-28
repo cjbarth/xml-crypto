@@ -328,10 +328,10 @@ Now you need to register the new algorithms:
 ```javascript
 /*register all the custom algorithms*/
 
-SignedXml.CanonicalizationAlgorithms["http://MyTransformation"] = MyTransformation;
-SignedXml.CanonicalizationAlgorithms["http://MyCanonicalization"] = MyCanonicalization;
-SignedXml.HashAlgorithms["http://myDigestAlgorithm"] = MyDigest;
-SignedXml.SignatureAlgorithms["http://mySigningAlgorithm"] = MySignatureAlgorithm;
+signedXml.CanonicalizationAlgorithms["http://MyTransformation"] = MyTransformation;
+signedXml.CanonicalizationAlgorithms["http://MyCanonicalization"] = MyCanonicalization;
+signedXml.HashAlgorithms["http://myDigestAlgorithm"] = MyDigest;
+signedXml.SignatureAlgorithms["http://mySigningAlgorithm"] = MySignatureAlgorithm;
 ```
 
 Now do the signing. Note how we configure the signature to use the above algorithms:
