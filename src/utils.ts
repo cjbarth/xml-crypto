@@ -12,7 +12,7 @@ export module Utils {
     );
   }
 
-  function findAttr(node, localName, namespace) {
+  export function findAttr(node, localName, namespace) {
     for (let i = 0; i < node.attributes.length; i++) {
       const attr = node.attributes[i];
 
