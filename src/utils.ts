@@ -12,7 +12,7 @@ export module Utils {
     );
   }
 
-  function findAttr(node, localName, namespace) {
+  export function findAttr(node, localName, namespace?): Attr | null {
     for (let i = 0; i < node.attributes.length; i++) {
       const attr = node.attributes[i];
 
@@ -34,7 +34,7 @@ export module Utils {
     return nodes[0];
   }
 
-  export function findChilds(node, localName, namespace): Node[] {
+  export function findChilds(node, localName, namespace?): Node[] {
     node = node.documentElement || node;
     const res: Node[] = [];
     for (let i = 0; i < node.childNodes.length; i++) {
@@ -80,7 +80,7 @@ export module Utils {
     });
   }
 
-  const EXTRACT_X509_CERTS = new RegExp(
+  export const EXTRACT_X509_CERTS = new RegExp(
     "-----BEGIN CERTIFICATE-----[^-]*-----END CERTIFICATE-----",
     "g"
   );
@@ -125,7 +125,7 @@ export module Utils {
     throw new Error("Unknown DER format.");
   }
 
-  function collectAncestorNamespaces(node, nsArray) {
+  function collectAncestorNamespaces(node, nsArray?) {
     if (!nsArray) {
       nsArray = [];
     }
@@ -160,7 +160,7 @@ export module Utils {
    * @param {object} namespaceResolver - xpath namespace resolver
    * @returns {Array} i.e. [{prefix: "saml", namespaceURI: "urn:oasis:names:tc:SAML:2.0:assertion"}]
    */
-  export function findAncestorNs(doc, docSubsetXpath, namespaceResolver) {
+  export function findAncestorNs(doc, docSubsetXpath, namespaceResolver?) {
     const docSubset = xpath.selectWithResolver(docSubsetXpath, doc, namespaceResolver);
 
     if (!Array.isArray(docSubset) || docSubset.length < 1) {
@@ -169,7 +169,7 @@ export module Utils {
 
     // Remove duplicate on ancestor namespace
     const ancestorNs = collectAncestorNamespaces(docSubset[0]);
-    const ancestorNsWithoutDuplicate = [];
+    const ancestorNsWithoutDuplicate : {prefix: string}[] = [];
     for (let i = 0; i < ancestorNs.length; i++) {
       let notOnTheList = true;
       for (const v in ancestorNsWithoutDuplicate) {
@@ -185,7 +185,7 @@ export module Utils {
     }
 
     // Remove namespaces which are already declared in the subset with the same prefix
-    const returningNs = [];
+    const returningNs : {prefix: string}[] = [];
     const subsetAttributes = docSubset[0].attributes;
     for (let j = 0; j < ancestorNsWithoutDuplicate.length; j++) {
       let isUnique = true;
@@ -212,10 +212,10 @@ export module Utils {
   export function validateDigestValue(digest, expectedDigest) {
     let buffer;
     let expectedBuffer;
+    const versionMatch = /^v(\d+)/.exec(process.version);
+    const majorVersion = versionMatch ? versionMatch[1] : null;
 
-    const majorVersion = /^v(\d+)/.exec(process.version)[1];
-
-    if (+majorVersion >= 6) {
+    if (majorVersion !== null && +majorVersion >= 6) {
       buffer = Buffer.from(digest, "base64");
       expectedBuffer = Buffer.from(expectedDigest, "base64");
     } else {

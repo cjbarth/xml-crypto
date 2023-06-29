@@ -5,7 +5,6 @@
 
 /// <reference types="node" />
 
-import { SelectedValue } from "xpath";
 import * as crypto from "crypto";
 import { SignedXml } from "./signed-xml";
 
@@ -82,17 +81,17 @@ export type ComputeSignatureOptions = {
 /**
  * Callback signature for the {@link SignedXml#computeSignature} method.
  */
-export type ComputeSignatureCallback = (error: Error | null, signature: SignedXml | null) => void;
+export type ComputeSignatureCallback = (error: Error | null, signature?: SignedXml | null) => void;
 
 /**
  * Represents a reference node for XML digital signature.
  */
 export interface Reference {
   // The XPath expression that selects the data to be signed.
-  xpath: string;
+  xpath: string | null;
 
   // Optional. An array of transforms to be applied to the data before signing.
-  transforms?: ReadonlyArray<CanonicalizationOrTransformAlgorithmType>;
+  transforms: ReadonlyArray<CanonicalizationOrTransformAlgorithmType>;
 
   // Optional. The algorithm used to calculate the digest value of the data.
   digestAlgorithm?: HashAlgorithmType;
@@ -144,7 +143,7 @@ export interface SignatureAlgorithm {
     material: string,
     key: crypto.KeyLike,
     signatureValue: string,
-    callback?: (err: Error, verified: boolean) => never
+    callback?: ErrorBackCallback<boolean>
   ): boolean;
 
   getAlgorithmName(): SignatureAlgorithmType;
@@ -185,63 +184,9 @@ export interface TransformAlgorithm {
  * @param prefix an optional namespace alias to be used for the generated XML
  */
 export type GetKeyInfoContentArgs = {
-  publicCert?: string | string[] | Buffer | null;
+  publicCert?: crypto.KeyLike | string[];
   prefix?: string | null;
 };
-
-export declare module utils {
-  /**
-   * @param pem The PEM-encoded base64 certificate to strip headers from
-   */
-  export function pemToDer(pem: string): string;
-
-  /**
-   * @param der The DER-encoded base64 certificate to add PEM headers too
-   * @param pemLabel The label of the header and footer to add
-   */
-  export function derToPem(
-    der: string,
-    pemLabel: ["CERTIFICATE" | "PRIVATE KEY" | "RSA PUBLIC KEY"]
-  ): string;
-
-  /**
-   * -----BEGIN [LABEL]-----
-   * base64([DATA])
-   * -----END [LABEL]-----
-   *
-   * Above is shown what PEM file looks like. As can be seen, base64 data
-   * can be in single line or multiple lines.
-   *
-   * This function normalizes PEM presentation to;
-   *  - contain PEM header and footer as they are given
-   *  - normalize line endings to '\n'
-   *  - normalize line length to maximum of 64 characters
-   *  - ensure that 'preeb' has line ending '\n'
-   *
-   * With a couple of notes:
-   *  - 'eol' is normalized to '\n'
-   *
-   * @param pem The PEM string to normalize to RFC7468 'stricttextualmsg' definition
-   */
-  export function normalizePem(pem: string): string;
-
-  /**
-   * PEM format has wide range of usages, but this library
-   * is enforcing RFC7468 which focuses on PKIX, PKCS and CMS.
-   *
-   * https://www.rfc-editor.org/rfc/rfc7468
-   *
-   * PEM_FORMAT_REGEX is validating given PEM file against RFC7468 'stricttextualmsg' definition.
-   *
-   * With few exceptions;
-   *  - 'posteb' MAY have 'eol', but it is not mandatory.
-   *  - 'preeb' and 'posteb' lines are limited to 64 characters, but
-   *     should not cause any issues in context of PKIX, PKCS and CMS.
-   */
-  export const EXTRACT_X509_CERTS: RegExp;
-  export const PEM_FORMAT_REGEX: RegExp;
-  export const BASE64_REGEX: RegExp;
-}
 
 export type ErrorBackCallback<T> =
   | ((err: Error, result?: never) => void)
