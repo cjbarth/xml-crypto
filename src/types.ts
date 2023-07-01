@@ -142,23 +142,24 @@ export interface SignatureAlgorithm {
   /**
    * Sign the given string using the given key
    */
+  getSignature(signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string;
   getSignature(
     signedInfo: crypto.BinaryLike,
     privateKey: crypto.KeyLike,
-    callback?: (err: Error, signedInfo: string) => never
-  ): string;
-
+    callback: (err: Error | null, signedInfo: string) => never
+  ): never;
   /**
    * Verify the given signature of the given string using key
    *
    * @param key a public cert, public key, or private key can be passed here
    */
+  verifySignature(material: string, key: crypto.KeyLike, signatureValue: string): boolean;
   verifySignature(
     material: string,
     key: crypto.KeyLike,
     signatureValue: string,
-    callback?: (err: Error, verified: boolean) => never
-  ): boolean;
+    callback: (err: Error, verified: boolean) => never
+  ): never;
 
   getAlgorithmName(): SignatureAlgorithmType;
 }

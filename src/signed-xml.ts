@@ -46,6 +46,11 @@ export class SignedXml {
    * It specifies a list of namespace prefixes that should be considered "inclusive" during the canonicalization process.
    */
   inclusiveNamespacesPrefixList: string = "";
+  namespaceResolver: XPathNSResolver = {
+    lookupNamespaceURI: function (prefix) {
+      throw new Error("Not implemented");
+    },
+  };
   implicitTransforms: ReadonlyArray<CanonicalizationOrTransformAlgorithmType> = [];
   keyInfoAttributes: { [attrName: string]: string } = {};
   getKeyInfoContent = SignedXml.getKeyInfoContent;
@@ -626,7 +631,7 @@ export class SignedXml {
    * @returns If no callback is provided, returns `this` (the instance of SignedXml).
    * @throws TypeError If the xml can not be parsed, or Error if there were invalid options passed.
    */
-  computeSignature(xml: string, opts: ComputeSignatureOptions): SignedXml;
+  computeSignature(xml: string, options: ComputeSignatureOptions): SignedXml;
 
   /**
    * Compute the signature of the given XML (using the already defined settings).
@@ -639,11 +644,15 @@ export class SignedXml {
    */
   computeSignature(
     xml: string,
-    opts: ComputeSignatureOptions,
+    options: ComputeSignatureOptions,
     callback: ComputeSignatureCallback
   ): void;
 
-  computeSignature(xml: string, options?: unknown, callback?: ComputeSignatureCallback): unknown {
+  computeSignature(
+    xml: string,
+    options?: ComputeSignatureOptions | ComputeSignatureCallback,
+    callback?: ComputeSignatureCallback
+  ): unknown {
     if (typeof options === "function" && callback == null) {
       callback = options;
     }
@@ -667,7 +676,7 @@ export class SignedXml {
 
     this.namespaceResolver = {
       lookupNamespaceURI: function (prefix) {
-        return existingPrefixes[prefix];
+        return prefix ? existingPrefixes[prefix] : null;
       },
     };
 
@@ -842,7 +851,7 @@ export class SignedXml {
           res += "<" + prefix + 'Reference URI="#' + id + '">';
         }
         res += "<" + prefix + "Transforms>";
-        for (const trans of ref.transforms) {
+        for (const trans of ref.transforms || []) {
           const transform = this.findCanonicalizationAlgorithm(trans);
           res += "<" + prefix + 'Transform Algorithm="' + transform.getAlgorithmName() + '"';
           if (ref.inclusiveNamespacesPrefixList) {

@@ -8,6 +8,7 @@ import {
 import { Utils } from "./utils";
 
 class EnvelopedSignature implements CanonicalizationOrTransformationAlgorithm {
+  includeComments: boolean = false;
   process(node: Node, options: CanonicalizationOrTransformationAlgorithmProcessOptions) {
     if (null == options.signatureNode) {
       const signature = xpath.select(

@@ -36,7 +36,7 @@ class Sha256 implements HashAlgorithm {
   }
 }
 
-class Sha512 implements HashAlgorithm{
+class Sha512 implements HashAlgorithm {
   getHash: (xml: any) => string;
   getAlgorithmName: () => string;
   constructor() {

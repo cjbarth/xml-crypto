@@ -28,11 +28,15 @@ export module Utils {
   }
 
   export function findChilds(node: Document, localName: string, namespace: string) {
-    node = node.documentElement || node;
-    const res: Node[] = [];
-    for (let i = 0; i < node.childNodes.length; i++) {
-      const child = node.childNodes[i];
-      if (child.localName === localName && (child.namespaceURI === namespace || !namespace)) {
+    const element = node.documentElement || node;
+    const res: Element[] = [];
+    for (let i = 0; i < element.childNodes.length; i++) {
+      const child = element.childNodes[i];
+      if (
+        xpath.isElement(child) &&
+        child.localName === localName &&
+        (child.namespaceURI === namespace || !namespace)
+      ) {
         res.push(child);
       }
     }
@@ -156,7 +160,11 @@ export module Utils {
    * @param {object} namespaceResolver - xpath namespace resolver
    * @returns {Array} i.e. [{prefix: "saml", namespaceURI: "urn:oasis:names:tc:SAML:2.0:assertion"}]
    */
-  export function findAncestorNs(doc, docSubsetXpath, namespaceResolver) {
+  export function findAncestorNs(
+    doc: Node,
+    docSubsetXpath: string,
+    namespaceResolver: XPathNSResolver
+  ) {
     const docSubset = xpath.selectWithResolver(docSubsetXpath, doc, namespaceResolver);
     let elementSubset: Element[] = [];
 
