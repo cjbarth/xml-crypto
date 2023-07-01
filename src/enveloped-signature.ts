@@ -20,18 +20,19 @@ class EnvelopedSignature implements CanonicalizationOrTransformationAlgorithm {
       return node;
     }
     const signatureNode = options.signatureNode;
-    const expectedSignatureValue = Utils.findFirst(
-      signatureNode,
-      ".//*[local-name(.)='SignatureValue']/text()"
+    const expectedSignatureValue = xpath.select1(
+      ".//*[local-name(.)='SignatureValue']/text()",
+      signatureNode
     ).data;
     const signatures = xpath.select(
       ".//*[local-name(.)='Signature' and namespace-uri(.)='http://www.w3.org/2000/09/xmldsig#']",
       node
     );
     for (const nodeSignature of signatures) {
-      const signatureValue = Utils.findFirst(
-        nodeSignature,
-        ".//*[local-name(.)='SignatureValue']/text()"
+      const signatureValue = xpath.select1(
+        ".//*[local-name(.)='SignatureValue']/text()",
+
+        nodeSignature
       ).data;
       if (expectedSignatureValue === signatureValue) {
         nodeSignature.parentNode.removeChild(nodeSignature);

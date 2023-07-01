@@ -1,3 +1,5 @@
+import { NamespacePrefix } from "./types";
+
 const utils = require("./utils");
 
 function isPrefixInScope(prefixesInScope, prefix, namespaceURI) {
@@ -15,9 +17,9 @@ function isPrefixInScope(prefixesInScope, prefix, namespaceURI) {
  * @type { import(".").CanonicalizationOrTransformationAlgorithm}
  */
 class ExclusiveCanonicalization {
-  constructor() {
-    this.includeComments = false;
-  }
+  includeComments: boolean = false;
+
+  constructor() {}
 
   attrCompare(a, b) {
     if (!a.namespaceURI && b.namespaceURI) {
@@ -51,8 +53,8 @@ class ExclusiveCanonicalization {
   renderAttrs(node) {
     let i;
     let attr;
-    const res = [];
-    const attrListToRender = [];
+    const res: string[] = [];
+    const attrListToRender: Attr[] = [];
 
     if (node.nodeType === 8) {
       return this.renderComment(node);
@@ -91,9 +93,9 @@ class ExclusiveCanonicalization {
   renderNs(node, prefixesInScope, defaultNs, defaultNsForPrefix, inclusiveNamespacesPrefixList) {
     let i;
     let attr;
-    const res = [];
+    const res: string[] = [];
     let newDefaultNs = defaultNs;
-    const nsListToRender = [];
+    const nsListToRender: NamespacePrefix[] = [];
     const currNs = node.namespaceURI || "";
 
     //handle the namespaceof the node itself
@@ -209,8 +211,8 @@ class ExclusiveCanonicalization {
     }
 
     const isOutsideDocument = node.ownerDocument === node.parentNode;
-    let isBeforeDocument = null;
-    let isAfterDocument = null;
+    let isBeforeDocument = false;
+    let isAfterDocument = false;
 
     if (isOutsideDocument) {
       let nextNode = node;

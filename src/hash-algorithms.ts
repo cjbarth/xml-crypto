@@ -1,9 +1,10 @@
-const crypto = require("crypto");
+import * as crypto from "crypto";
+import { HashAlgorithm } from "./types";
 
-/**
- * @type { import("./index.js").HashAlgorithm}
- */
-class Sha1 {
+class Sha1 implements HashAlgorithm {
+  getHash: (xml: any) => string;
+  getAlgorithmName: () => string;
+
   constructor() {
     this.getHash = function (xml) {
       const shasum = crypto.createHash("sha1");
@@ -18,10 +19,9 @@ class Sha1 {
   }
 }
 
-/**
- * @type { import("./index.js").HashAlgorithm}
- */
-class Sha256 {
+class Sha256 implements HashAlgorithm {
+  getHash: (xml: any) => string;
+  getAlgorithmName: () => string;
   constructor() {
     this.getHash = function (xml) {
       const shasum = crypto.createHash("sha256");
@@ -36,10 +36,9 @@ class Sha256 {
   }
 }
 
-/**
- * @type { import("./index.js").HashAlgorithm}
- */
-class Sha512 {
+class Sha512 implements HashAlgorithm{
+  getHash: (xml: any) => string;
+  getAlgorithmName: () => string;
   constructor() {
     this.getHash = function (xml) {
       const shasum = crypto.createHash("sha512");

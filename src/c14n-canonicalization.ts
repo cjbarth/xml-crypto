@@ -1,10 +1,10 @@
-import { CanonicalizationOrTransformationAlgorithm } from "./types";
+import { CanonicalizationOrTransformationAlgorithm, ProcessOptions } from "./types";
 import { Utils } from "./utils";
 
 class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm {
-  constructor() {
-    this.includeComments = false;
-  }
+  includeComments: boolean = false;
+
+  constructor() {}
 
   attrCompare(a, b) {
     if (!a.namespaceURI && b.namespaceURI) {
@@ -38,7 +38,7 @@ class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm 
   renderAttrs(node) {
     let i;
     let attr;
-    const attrListToRender = [];
+    const attrListToRender: Attr[] = [];
 
     if (node.nodeType === 8) {
       return this.renderComment(node);
@@ -79,9 +79,9 @@ class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm 
   renderNs(node, prefixesInScope, defaultNs, defaultNsForPrefix, ancestorNamespaces) {
     let i;
     let attr;
-    const res = [];
+    const res: string[] = [];
     let newDefaultNs = defaultNs;
-    const nsListToRender = [];
+    const nsListToRender: { prefix: string; namespaceURI: string }[] = [];
     const currNs = node.namespaceURI || "";
 
     //handle the namespace of the node itself
@@ -189,8 +189,8 @@ class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm 
     }
 
     const isOutsideDocument = node.ownerDocument === node.parentNode;
-    let isBeforeDocument = null;
-    let isAfterDocument = null;
+    let isBeforeDocument = false;
+    let isAfterDocument = false;
 
     if (isOutsideDocument) {
       let nextNode = node;
@@ -231,13 +231,13 @@ class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm 
    * @return {String}
    * @api public
    */
-  process(node, options) {
+  process(node: Node, options: ProcessOptions) {
     options = options || {};
     const defaultNs = options.defaultNs || "";
     const defaultNsForPrefix = options.defaultNsForPrefix || {};
     const ancestorNamespaces = options.ancestorNamespaces || [];
 
-    const prefixesInScope = [];
+    const prefixesInScope: string[] = [];
     for (let i = 0; i < ancestorNamespaces.length; i++) {
       prefixesInScope.push(ancestorNamespaces[i].prefix);
     }

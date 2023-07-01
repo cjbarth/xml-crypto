@@ -50,6 +50,17 @@ export type SignedXmlOptions = {
   getCertFromKeyInfo?(keyInfo: string): string | null;
 };
 
+export type ProcessOptions = {
+  defaultNs?: string;
+  defaultNsForPrefix?: NamespacePrefix;
+  ancestorNamespaces?: NamespacePrefix[];
+};
+
+export type NamespacePrefix = {
+  prefix: string;
+  namespaceURI: string;
+};
+
 export type CanonicalizationOrTransformationAlgorithmProcessOptions = {
   defaultNs?: string;
   defaultForPrefix?: {};
@@ -115,6 +126,8 @@ export interface CanonicalizationOrTransformationAlgorithm {
   process(node: Node, options: CanonicalizationOrTransformationAlgorithmProcessOptions): Node;
 
   getAlgorithmName(): CanonicalizationOrTransformAlgorithmType;
+
+  includeComments: boolean;
 }
 
 /** Implement this to create a new HashAlgorithm */

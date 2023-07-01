@@ -1,4 +1,5 @@
 import * as xpath from "xpath";
+import { NamespacePrefix } from "./types";
 
 export module Utils {
   function attrEqualsExplicitly(attr, localName, namespace) {
@@ -26,15 +27,7 @@ export module Utils {
     return null;
   }
 
-  export function findFirst(doc, path): xpath.SelectedValue {
-    const nodes = xpath.select(path, doc);
-    if (nodes.length === 0) {
-      throw "could not find xpath " + path;
-    }
-    return nodes[0];
-  }
-
-  export function findChilds(node, localName, namespace): Node[] {
+  export function findChilds(node: Document, localName: string, namespace: string) {
     node = node.documentElement || node;
     const res: Node[] = [];
     for (let i = 0; i < node.childNodes.length; i++) {
@@ -80,7 +73,7 @@ export module Utils {
     });
   }
 
-  const EXTRACT_X509_CERTS = new RegExp(
+  export const EXTRACT_X509_CERTS = new RegExp(
     "-----BEGIN CERTIFICATE-----[^-]*-----END CERTIFICATE-----",
     "g"
   );
@@ -125,12 +118,15 @@ export module Utils {
     throw new Error("Unknown DER format.");
   }
 
-  function collectAncestorNamespaces(node, nsArray) {
-    if (!nsArray) {
-      nsArray = [];
+  function collectAncestorNamespaces(
+    node: Element,
+    nsArray: NamespacePrefix[] = []
+  ): NamespacePrefix[] {
+    if (!xpath.isElement(node.parentNode)) {
+      throw new Error("Parent Node must be an element");
     }
 
-    const parent = node.parentNode;
+    const parent: Element = node.parentNode;
 
     if (!parent) {
       return nsArray;
@@ -142,7 +138,7 @@ export module Utils {
         if (attr && attr.nodeName && attr.nodeName.search(/^xmlns:/) !== -1) {
           nsArray.push({
             prefix: attr.nodeName.replace(/^xmlns:/, ""),
-            namespaceURI: attr.nodeValue,
+            namespaceURI: attr.nodeValue || "",
           });
         }
       }
@@ -162,14 +158,21 @@ export module Utils {
    */
   export function findAncestorNs(doc, docSubsetXpath, namespaceResolver) {
     const docSubset = xpath.selectWithResolver(docSubsetXpath, doc, namespaceResolver);
+    let elementSubset: Element[] = [];
 
     if (!Array.isArray(docSubset) || docSubset.length < 1) {
       return [];
     }
 
+    if (!docSubset.every((node) => xpath.isElement(node))) {
+      throw new Error("Document subset must be list of elements");
+    } else {
+      elementSubset = docSubset as Element[];
+    }
+
     // Remove duplicate on ancestor namespace
-    const ancestorNs = collectAncestorNamespaces(docSubset[0]);
-    const ancestorNsWithoutDuplicate = [];
+    const ancestorNs = collectAncestorNamespaces(elementSubset[0]);
+    const ancestorNsWithoutDuplicate: NamespacePrefix[] = [];
     for (let i = 0; i < ancestorNs.length; i++) {
       let notOnTheList = true;
       for (const v in ancestorNsWithoutDuplicate) {
@@ -185,8 +188,8 @@ export module Utils {
     }
 
     // Remove namespaces which are already declared in the subset with the same prefix
-    const returningNs = [];
-    const subsetAttributes = docSubset[0].attributes;
+    const returningNs: NamespacePrefix[] = [];
+    const subsetAttributes = elementSubset[0].attributes;
     for (let j = 0; j < ancestorNsWithoutDuplicate.length; j++) {
       let isUnique = true;
       for (let k = 0; k < subsetAttributes.length; k++) {
@@ -213,7 +216,7 @@ export module Utils {
     let buffer;
     let expectedBuffer;
 
-    const majorVersion = /^v(\d+)/.exec(process.version)[1];
+    const majorVersion = /^v(\d+)/.exec(process.version)![1];
 
     if (+majorVersion >= 6) {
       buffer = Buffer.from(digest, "base64");

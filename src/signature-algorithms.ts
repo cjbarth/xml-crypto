@@ -1,9 +1,11 @@
-const crypto = require("crypto");
+import * as crypto from "crypto";
+import { SignatureAlgorithm } from "./types";
 
-/**
- * @type { import("./index.js").SignatureAlgorithm}
- */
-class RsaSha1 {
+class RsaSha1 implements SignatureAlgorithm {
+  getSignature: (signedInfo: any, privateKey: any, callback: any) => string;
+  verifySignature: (str: any, key: any, signatureValue: any, callback: any) => boolean;
+  getAlgorithmName: () => string;
+
   constructor() {
     /**
      * Sign the given string using the given key
@@ -39,10 +41,11 @@ class RsaSha1 {
   }
 }
 
-/**
- * @type { import("./index.js").SignatureAlgorithm} SignatureAlgorithm
- */
-class RsaSha256 {
+class RsaSha256 implements SignatureAlgorithm{
+  getSignature: (signedInfo: any, privateKey: any, callback: any) => string;
+  verifySignature: (str: any, key: any, signatureValue: any, callback: any) => boolean;
+  getAlgorithmName: () => string;
+
   constructor() {
     this.getSignature = function (signedInfo, privateKey, callback) {
       const signer = crypto.createSign("RSA-SHA256");
@@ -70,10 +73,11 @@ class RsaSha256 {
   }
 }
 
-/**
- * @type { import("./index.js").SignatureAlgorithm}
- */
-class RsaSha512 {
+class RsaSha512 implements SignatureAlgorithm {
+  getSignature: (signedInfo: any, privateKey: any, callback: any) => string;
+  verifySignature: (str: any, key: any, signatureValue: any, callback: any) => boolean;
+  getAlgorithmName: () => string;
+
   constructor() {
     this.getSignature = function (signedInfo, privateKey, callback) {
       const signer = crypto.createSign("RSA-SHA512");
@@ -101,10 +105,11 @@ class RsaSha512 {
   }
 }
 
-/**
- * @type { import("./index.js").SignatureAlgorithm}
- */
-class HmacSha1 {
+class HmacSha1 implements SignatureAlgorithm{
+  verifySignature: (str: any, key: any, signatureValue: any) => boolean;
+  getAlgorithmName: () => string;
+  getSignature: (signedInfo: any, privateKey: any) => string;
+
   constructor() {
     this.verifySignature = function (str, key, signatureValue) {
       const verifier = crypto.createHmac("SHA1", key);
