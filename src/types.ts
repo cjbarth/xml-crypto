@@ -137,31 +137,37 @@ export interface HashAlgorithm {
   getHash(xml: string): string;
 }
 
-/** Implement this to create a new SignatureAlgorithm */
-export interface SignatureAlgorithm {
+/** Extend this to create a new SignatureAlgorithm */
+export abstract class SignatureAlgorithm {
   /**
    * Sign the given string using the given key
    */
-  getSignature(signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string;
-  getSignature(
+  abstract getSignature(signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string;
+  abstract getSignature(
     signedInfo: crypto.BinaryLike,
     privateKey: crypto.KeyLike,
-    callback: (err: Error | null, signedInfo: string) => never
-  ): never;
+    callback: (err: Error | null, signedInfo: string) => void
+  ): void;
   /**
    * Verify the given signature of the given string using key
    *
    * @param key a public cert, public key, or private key can be passed here
    */
-  verifySignature(material: string, key: crypto.KeyLike, signatureValue: string): boolean;
-  verifySignature(
+  abstract verifySignature(material: string, key: crypto.KeyLike, signatureValue: string): boolean;
+  abstract verifySignature(
     material: string,
     key: crypto.KeyLike,
     signatureValue: string,
-    callback: (err: Error, verified: boolean) => never
-  ): never;
+    callback: (err: Error | null, verified?: boolean) => void
+  ): void;
+  abstract verifySignature(
+    material: string,
+    key: crypto.KeyLike,
+    signatureValue: string,
+    callback?: (err: Error | null, verified?: boolean) => void
+  ): boolean | void;
 
-  getAlgorithmName(): SignatureAlgorithmType;
+  abstract getAlgorithmName(): SignatureAlgorithmType;
 }
 
 /** Implement this to create a new TransformAlgorithm */
@@ -257,6 +263,36 @@ export declare module utils {
   export const BASE64_REGEX: RegExp;
 }
 
-export type ErrorBackCallback<T> =
-  | ((err: Error, result?: never) => void)
-  | ((err: null, result: T) => void);
+// export type ErrorBackCallback<T> =
+//   | ((err: Error, result?: never) => void)
+//   | ((err: null, result: T) => void);
+
+export type ErrorBackCallback<T> = (err: Error | null, result?: T) => void;
+// type Callback<T> = (err: Error | null, result?: T) => void;
+
+/**
+ * This function will add a callback version of a sync function.
+ *
+ * This follows the factory pattern.
+ * Just call this function, passing the function that you'd like to add a callback version of.
+ */
+export function createOptionalCallbackFunction<T, A extends any[]>(
+  syncVersion: (...args: A) => T
+): {
+  (...args: A): T;
+  (...args: [...A, ErrorBackCallback<T>]): void;
+} {
+  return ((...args: any[]): any => {
+    const lastArg = args[args.length - 1];
+    if (typeof lastArg === "function") {
+      try {
+        const result = syncVersion(...(args.slice(0, -1) as A));
+        (lastArg as ErrorBackCallback<T>)(null, result);
+      } catch (err) {
+        (lastArg as ErrorBackCallback<T>)(err instanceof Error ? err : null);
+      }
+    } else {
+      return syncVersion(...(args as A));
+    }
+  }) as any;
+}

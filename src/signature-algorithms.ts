@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import { SignatureAlgorithm } from "./types";
+import { SignatureAlgorithm, createOptionalCallbackFunction } from "./types";
 
 class RsaSha1 implements SignatureAlgorithm {
   getSignature = (signedInfo, privateKey, callback) => {
@@ -79,44 +79,30 @@ class RsaSha512 implements SignatureAlgorithm {
   };
 }
 
-class HmacSha1 implements SignatureAlgorithm {
-  verifySignature = (str, key, signatureValue, callback) => {
-    const verifier = crypto.createHmac("SHA1", key);
-    verifier.update(str);
-    const res = verifier.digest("base64");
+class HmacSha1 extends SignatureAlgorithm {
+  verifySignature = createOptionalCallbackFunction(
+    (material: string, key: crypto.KeyLike, signatureValue: string): boolean => {
+      const verifier = crypto.createHmac("SHA1", key);
+      verifier.update(material);
+      const res = verifier.digest("base64");
 
-    if (callback) {
-      callback(null, res === signatureValue);
-    } else {
       return res === signatureValue;
     }
-  };
+  );
 
   getAlgorithmName = () => {
     return "http://www.w3.org/2000/09/xmldsig#hmac-sha1";
   };
 
-  getSignature(signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string;
-  getSignature(
-    signedInfo: crypto.BinaryLike,
-    privateKey: crypto.KeyLike,
-    callback: (err: Error | null, signedInfo: string) => never
-  ): never;
-  getSignature(
-    signedInfo: crypto.BinaryLike,
-    privateKey: crypto.KeyLike,
-    callback?: (err: Error | null, signedInfo: string) => never
-  ): string | never {
-    const signer = crypto.createHmac("SHA1", privateKey);
-    signer.update(signedInfo);
-    const res = signer.digest("base64");
+  getSignature = createOptionalCallbackFunction(
+    (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike) => {
+      const signer = crypto.createHmac("SHA1", privateKey);
+      signer.update(signedInfo);
+      const res = signer.digest("base64");
 
-    if (callback) {
-      callback(null, res);
+      return res;
     }
-
-    return res;
-  }
+  );
 }
 
 export { RsaSha1, RsaSha256, RsaSha512, HmacSha1 };
