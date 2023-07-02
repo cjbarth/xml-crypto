@@ -32,7 +32,6 @@ class EnvelopedSignature implements CanonicalizationOrTransformationAlgorithm {
     for (const nodeSignature of signatures) {
       const signatureValue = xpath.select1(
         ".//*[local-name(.)='SignatureValue']/text()",
-
         nodeSignature
       ).data;
       if (expectedSignatureValue === signatureValue) {

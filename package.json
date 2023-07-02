@@ -26,9 +26,11 @@
     "README.md"
   ],
   "scripts": {
+    "build": "tsc",
     "changelog": "gren changelog --override --generate --head master",
     "lint": "eslint --ext .js \"{lib,test}/*.js\" --cache && npm run prettier-check",
     "lint:fix": "eslint --ext .js --fix \"{lib,test}/*.js\" && npm run prettier-format",
+    "prepare": "tsc",
     "prettier-check": "prettier --config .prettierrc.json --check .",
     "prettier-format": "prettier --config .prettierrc.json --write .",
     "prerelease": "git clean -xfd && npm ci && npm test",

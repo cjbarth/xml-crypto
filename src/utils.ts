@@ -2,24 +2,24 @@ import * as xpath from "xpath";
 import { NamespacePrefix } from "./types";
 
 export module Utils {
-  function attrEqualsExplicitly(attr, localName, namespace) {
-    return attr.localName === localName && (attr.namespaceURI === namespace || !namespace);
+  function attrEqualsExplicitly(attr: Attr, localName: string, namespace?: string) {
+    return attr.localName === localName && (attr.namespaceURI === namespace || namespace == null);
   }
 
-  function attrEqualsImplicitly(attr, localName, namespace, node) {
+  function attrEqualsImplicitly(attr: Attr, localName: string, namespace?: string, node?: Element) {
     return (
       attr.localName === localName &&
-      ((!attr.namespaceURI && node.namespaceURI === namespace) || !namespace)
+      ((!attr.namespaceURI && node?.namespaceURI === namespace) || namespace == null)
     );
   }
 
-  export function findAttr(node, localName, namespace) {
-    for (let i = 0; i < node.attributes.length; i++) {
-      const attr = node.attributes[i];
+  export function findAttr(element: Element, localName: string, namespace?: string) {
+    for (let i = 0; i < element.attributes.length; i++) {
+      const attr = element.attributes[i];
 
       if (
         attrEqualsExplicitly(attr, localName, namespace) ||
-        attrEqualsImplicitly(attr, localName, namespace, node)
+        attrEqualsImplicitly(attr, localName, namespace, element)
       ) {
         return attr;
       }
@@ -27,15 +27,15 @@ export module Utils {
     return null;
   }
 
-  export function findChilds(node: Document, localName: string, namespace: string) {
-    const element = node.documentElement || node;
+  export function findChilds(node: Node | Document, localName: string, namespace?: string) {
+    const element = (node as Document).documentElement ?? node;
     const res: Element[] = [];
     for (let i = 0; i < element.childNodes.length; i++) {
       const child = element.childNodes[i];
       if (
         xpath.isElement(child) &&
         child.localName === localName &&
-        (child.namespaceURI === namespace || !namespace)
+        (child.namespaceURI === namespace || namespace == null)
       ) {
         res.push(child);
       }
@@ -163,7 +163,7 @@ export module Utils {
   export function findAncestorNs(
     doc: Node,
     docSubsetXpath: string,
-    namespaceResolver: XPathNSResolver
+    namespaceResolver?: XPathNSResolver
   ) {
     const docSubset = xpath.selectWithResolver(docSubsetXpath, doc, namespaceResolver);
     let elementSubset: Element[] = [];

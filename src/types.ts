@@ -93,14 +93,14 @@ export type ComputeSignatureOptions = {
 /**
  * Callback signature for the {@link SignedXml#computeSignature} method.
  */
-export type ComputeSignatureCallback = (error: Error | null, signature: SignedXml | null) => void;
+export type ComputeSignatureCallback = (error: Error | null, signature?: SignedXml) => void;
 
 /**
  * Represents a reference node for XML digital signature.
  */
 export interface Reference {
   // The XPath expression that selects the data to be signed.
-  xpath: string;
+  xpath: string | null;
 
   // Optional. An array of transforms to be applied to the data before signing.
   transforms?: ReadonlyArray<CanonicalizationOrTransformAlgorithmType>;
@@ -112,7 +112,7 @@ export interface Reference {
   uri?: string;
 
   // Optional. The digest value of the referenced data.
-  digestValue?: string;
+  digestValue?: unknown;
 
   // Optional. A list of namespace prefixes to be treated as "inclusive" during canonicalization.
   inclusiveNamespacesPrefixList?: string;
@@ -146,7 +146,7 @@ export abstract class SignatureAlgorithm {
   abstract getSignature(
     signedInfo: crypto.BinaryLike,
     privateKey: crypto.KeyLike,
-    callback: (err: Error | null, signedInfo: string) => void
+    callback?: ErrorBackCallback<string>
   ): void;
   /**
    * Verify the given signature of the given string using key
@@ -158,14 +158,8 @@ export abstract class SignatureAlgorithm {
     material: string,
     key: crypto.KeyLike,
     signatureValue: string,
-    callback: (err: Error | null, verified?: boolean) => void
+    callback?: ErrorBackCallback<boolean>
   ): void;
-  abstract verifySignature(
-    material: string,
-    key: crypto.KeyLike,
-    signatureValue: string,
-    callback?: (err: Error | null, verified?: boolean) => void
-  ): boolean | void;
 
   abstract getAlgorithmName(): SignatureAlgorithmType;
 }
@@ -205,7 +199,7 @@ export interface TransformAlgorithm {
  * @param prefix an optional namespace alias to be used for the generated XML
  */
 export type GetKeyInfoContentArgs = {
-  publicCert?: string | string[] | Buffer | null;
+  publicCert?: crypto.KeyLike;
   prefix?: string | null;
 };
 
@@ -263,12 +257,9 @@ export declare module utils {
   export const BASE64_REGEX: RegExp;
 }
 
-// export type ErrorBackCallback<T> =
-//   | ((err: Error, result?: never) => void)
-//   | ((err: null, result: T) => void);
-
-export type ErrorBackCallback<T> = (err: Error | null, result?: T) => void;
-// type Callback<T> = (err: Error | null, result?: T) => void;
+export type ErrorBackCallback<T> = 
+    | ((err: Error) => void)
+    | ((err: null, result: T) => void);
 
 /**
  * This function will add a callback version of a sync function.
@@ -287,12 +278,13 @@ export function createOptionalCallbackFunction<T, A extends any[]>(
     if (typeof lastArg === "function") {
       try {
         const result = syncVersion(...(args.slice(0, -1) as A));
-        (lastArg as ErrorBackCallback<T>)(null, result);
+        (lastArg as (err: null, result: T) => void)(null, result);
       } catch (err) {
-        (lastArg as ErrorBackCallback<T>)(err instanceof Error ? err : null);
+        (lastArg as (err: Error) => void)(err instanceof Error ? err : new Error('Unknown error'));
       }
     } else {
       return syncVersion(...(args as A));
     }
   }) as any;
 }
+

@@ -64,7 +64,7 @@ export class SignedXml {
   private id = 0;
   private signedXml = "";
   private signatureXml = "";
-  private signatureNode = null;
+  private signatureNode: Node | null = null;
   private signatureValue = "";
   private originalXmlWithIds = "";
   /**
@@ -185,12 +185,13 @@ export class SignedXml {
       publicCert = publicCert.toString("latin1");
     }
 
+    let publicCertMatches: string[] = [];
     if (typeof publicCert === "string") {
-      publicCert = publicCert.match(Utils.EXTRACT_X509_CERTS);
+      publicCertMatches = publicCert.match(Utils.EXTRACT_X509_CERTS) || [];
     }
 
-    if (Array.isArray(publicCert)) {
-      x509Certs = publicCert
+    if (publicCertMatches.length > 0) {
+      x509Certs = publicCertMatches
         .map((c) => `<X509Certificate>${Utils.pemToDer(c)}</X509Certificate>`)
         .join("");
     }
@@ -205,7 +206,7 @@ export class SignedXml {
    * @param keyInfo an array with exactly one KeyInfo element (see https://www.w3.org/TR/2008/REC-xmldsig-core-20080610/#sec-X509Data)
    * @return the signing certificate as a string in PEM format
    */
-  static getCertFromKeyInfo(keyInfo: string): string | null {
+  static getCertFromKeyInfo(keyInfo?: string | null): string | null {
     if (keyInfo != null && keyInfo.length > 0) {
       const certs = xpath.select(".//*[local-name(.)='X509Certificate']", keyInfo[0]);
       if (certs.length > 0) {
@@ -275,7 +276,11 @@ export class SignedXml {
     }
   }
 
-  getCanonSignedInfoXml(doc) {
+  getCanonSignedInfoXml(doc: Document) {
+    if (this.signatureNode == null) {
+      throw new Error("No signature found.");
+    }
+
     const signedInfo = Utils.findChilds(this.signatureNode, "SignedInfo");
     if (signedInfo.length === 0) {
       throw new Error("could not find SignedInfo element in the message");
@@ -296,8 +301,7 @@ export class SignedXml {
     /**
      * Search for ancestor namespaces before canonicalization.
      */
-    let ancestorNamespaces = [];
-    ancestorNamespaces = Utils.findAncestorNs(doc, "//*[local-name()='SignedInfo']");
+    const ancestorNamespaces = Utils.findAncestorNs(doc, "//*[local-name()='SignedInfo']");
 
     const c14nOptions = {
       ancestorNamespaces: ancestorNamespaces,
@@ -321,33 +325,45 @@ export class SignedXml {
     return this.getCanonXml(ref.transforms, node, c14nOptions);
   }
 
-  validateSignatureValue(doc, callback: ErrorBackCallback<boolean>) {
+  validateSignatureValue(doc: Document): boolean;
+  validateSignatureValue(doc: Document, callback: ErrorBackCallback<boolean>): void;
+  validateSignatureValue(doc: Document, callback?: ErrorBackCallback<boolean>): boolean | void {
     const signedInfoCanon = this.getCanonSignedInfoXml(doc);
     const signer = this.findSignatureAlgorithm(this.signatureAlgorithm);
-    const res = signer.verifySignature(
-      signedInfoCanon,
-      this.getCertFromKeyInfo(this.keyInfo) || this.publicCert || this.privateKey,
-      this.signatureValue,
-      callback
-    );
-    if (!res && !callback) {
-      this.validationErrors.push(
-        "invalid signature: the signature value " + this.signatureValue + " is incorrect"
-      );
+    const key = this.getCertFromKeyInfo(this.keyInfo) || this.publicCert || this.privateKey;
+    if (key == null) {
+      throw new Error("KeyInfo or publicCert or privateKey is required to validate signature");
     }
-    return res;
+    if (typeof callback === 'function') {
+      signer.verifySignature(signedInfoCanon, key, this.signatureValue, callback);
+    } else {
+      const res = signer.verifySignature(signedInfoCanon, key, this.signatureValue);
+      if (res === false) {
+        this.validationErrors.push(
+          "invalid signature: the signature value " + this.signatureValue + " is incorrect"
+        );
+      }
+      return res;
+    }
   }
 
-  calculateSignatureValue(doc, callback) {
+  calculateSignatureValue(doc: Document, callback?: ErrorBackCallback<string>) {
     const signedInfoCanon = this.getCanonSignedInfoXml(doc);
     const signer = this.findSignatureAlgorithm(this.signatureAlgorithm);
-    this.signatureValue = signer.getSignature(signedInfoCanon, this.privateKey, callback);
+    if (this.privateKey == null) {
+      throw new Error("Private key is required to compute signature");
+    }
+    if (typeof callback === 'function') {
+      signer.getSignature(signedInfoCanon, this.privateKey, callback);
+    } else {
+      this.signatureValue = signer.getSignature(signedInfoCanon, this.privateKey);
+    }
   }
 
   findSignatureAlgorithm(name: SignatureAlgorithmType) {
     const algo = this.SignatureAlgorithms[name];
     if (algo) {
-      return new algo();
+      return algo;
     } else {
       throw new Error("signature algorithm '" + name + "' is not supported");
     }
@@ -356,7 +372,7 @@ export class SignedXml {
   findCanonicalizationAlgorithm(name) {
     const algo = this.CanonicalizationAlgorithms[name];
     if (algo) {
-      return new algo();
+      return algo;
     } else {
       throw new Error("canonicalization algorithm '" + name + "' is not supported");
     }
@@ -365,7 +381,7 @@ export class SignedXml {
   findHashAlgorithm(name) {
     const algo = this.HashAlgorithms[name];
     if (algo) {
-      return new algo();
+      return algo;
     } else {
       throw new Error("hash algorithm '" + name + "' is not supported");
     }
@@ -374,12 +390,12 @@ export class SignedXml {
   validateReferences(doc) {
     for (const ref of this.references) {
       let elemXpath;
-      const uri = ref.uri[0] === "#" ? ref.uri.substring(1) : ref.uri;
+      const uri = ref.uri?.[0] === "#" ? ref.uri.substring(1) : ref.uri;
       let elem = [];
 
       if (uri === "") {
         elem = xpath.select("//*", doc);
-      } else if (uri.indexOf("'") !== -1) {
+      } else if (uri?.indexOf("'") !== -1) {
         // xpath injection
         throw new Error("Cannot validate a uri with quotes inside it");
       } else {
@@ -457,9 +473,9 @@ export class SignedXml {
     }
     this.canonicalizationAlgorithm = nodes[0].value;
 
-    this.signatureAlgorithm = Utils.findFirst(
-      signatureNode,
-      ".//*[local-name(.)='SignatureMethod']/@Algorithm"
+    this.signatureAlgorithm = xpath.select1(
+      ".//*[local-name(.)='SignatureMethod']/@Algorithm",
+      signatureNode
     ).value;
 
     this.references = [];
@@ -475,10 +491,9 @@ export class SignedXml {
       this.loadReference(reference);
     }
 
-    this.signatureValue = Utils.findFirst(
-      signatureNode,
-      ".//*[local-name(.)='SignatureValue']/text()"
-    ).data.replace(/\r?\n/g, "");
+    this.signatureValue = xpath
+      .select1(".//*[local-name(.)='SignatureValue']/text()", signatureNode)
+      .data.replace(/\r?\n/g, "");
 
     this.keyInfo = xpath.select(".//*[local-name(.)='KeyInfo']", signatureNode);
   }
@@ -504,21 +519,25 @@ export class SignedXml {
     if (nodes.length === 0) {
       throw new Error("could not find DigestValue node in reference " + ref.toString());
     }
-    if (nodes[0].childNodes.length === 0 || !nodes[0].firstChild.data) {
+    const firstChild = nodes[0].firstChild;
+    if (!firstChild || !("data" in firstChild)) {
       throw new Error("could not find the value of DigestValue in " + nodes[0].toString());
     }
-    const digestValue = nodes[0].firstChild.data;
+    const digestValue = firstChild.data;
 
-    const transforms = [];
+    const transforms: string[] = [];
     let trans;
     let inclusiveNamespacesPrefixList;
     nodes = Utils.findChilds(ref, "Transforms");
     if (nodes.length !== 0) {
       const transformsNode = nodes[0];
       const transformsAll = Utils.findChilds(transformsNode, "Transform");
-      for (const t of transformsAll) {
-        trans = t;
-        transforms.push(Utils.findAttr(trans, "Algorithm").value);
+      for (const transform of transformsAll) {
+        const transformAttr = Utils.findAttr(transform, "Algorithm");
+
+        if (transformAttr) {
+          transforms.push(transformAttr.value);
+        }
       }
 
       // This is a little strange, we are looking for children of the last child of `transformsNode`
@@ -566,7 +585,7 @@ export class SignedXml {
       null,
       transforms,
       digestAlgo,
-      Utils.findAttr(ref, "URI").value,
+      Utils.findAttr(ref, "URI")?.value,
       digestValue,
       inclusiveNamespacesPrefixList,
       false
@@ -585,11 +604,11 @@ export class SignedXml {
    * @param isEmptyUri Indicates whether the URI is empty. Defaults to `false`.
    */
   addReference(
-    xpath: string,
+    xpath: string | null,
     transforms?: CanonicalizationOrTransformAlgorithmType[],
     digestAlgorithm?: HashAlgorithmType,
     uri?: string,
-    digestValue?: string,
+    digestValue?: unknown,
     inclusiveNamespacesPrefixList?: string,
     isEmptyUri?: boolean
   ): void {
@@ -603,15 +622,6 @@ export class SignedXml {
       isEmptyUri: isEmptyUri,
     });
   }
-
-  /**
-   * Compute the signature of the given XML (using the already defined settings).
-   *
-   * @param xml The XML to compute the signature for.
-   * @returns `this` (the instance of SignedXml).
-   * @throws TypeError If the xml can not be parsed.
-   */
-  computeSignature(xml: string): SignedXml;
 
   /**
    * Compute the signature of the given XML (using the already defined settings).
@@ -650,25 +660,29 @@ export class SignedXml {
 
   computeSignature(
     xml: string,
-    options?: ComputeSignatureOptions | ComputeSignatureCallback,
-    callback?: ComputeSignatureCallback
+    options: ComputeSignatureOptions | ComputeSignatureCallback,
+    callbackParam?: ComputeSignatureCallback
   ): unknown {
-    if (typeof options === "function" && callback == null) {
+    let callback: ComputeSignatureCallback | undefined;
+    if (typeof options === "function" && callbackParam == null) {
       callback = options;
+      options = {} as ComputeSignatureOptions;
+    } else {
+      options = options as ComputeSignatureOptions;
+      callback = callbackParam;
     }
-
+  
     if (callback != null && typeof callback !== "function") {
       throw new Error("Last parameter must be a callback function");
     }
 
     const doc = new Dom().parseFromString(xml);
     let xmlNsAttr = "xmlns";
-    const signatureAttrs = [];
+    const signatureAttrs: string[] = [];
     let currentPrefix;
 
     const validActions = ["append", "prepend", "before", "after"];
 
-    options = options || {};
     const prefix = options.prefix;
     const attrs = options.attrs || {};
     const location = options.location || {};
@@ -695,7 +709,7 @@ export class SignedXml {
       if (!callback) {
         throw err;
       } else {
-        callback(err, null);
+        callback(err);
         return;
       }
     }
@@ -735,7 +749,7 @@ export class SignedXml {
     const dummySignatureWrapper =
       "<Dummy " + existingPrefixesString + ">" + signatureXml + "</Dummy>";
     const nodeXml = new Dom().parseFromString(dummySignatureWrapper);
-    const signatureDoc = nodeXml.documentElement.firstChild;
+    const signatureDoc: Node = nodeXml.documentElement.firstChild;
 
     let referenceNode = xpath.select(location.reference, doc);
 
@@ -746,7 +760,7 @@ export class SignedXml {
       if (!callback) {
         throw err2;
       } else {
-        callback(err2, null);
+        callback(err2);
         return;
       }
     }
@@ -764,8 +778,8 @@ export class SignedXml {
     }
 
     this.signatureNode = signatureDoc;
-    let signedInfoNode = Utils.findChilds(this.signatureNode, "SignedInfo");
-    if (signedInfoNode.length === 0) {
+    let signedInfoNodes = Utils.findChilds(this.signatureNode, "SignedInfo");
+    if (signedInfoNodes.length === 0) {
       const err3 = new Error("could not find SignedInfo element in the message");
       if (!callback) {
         throw err3;
@@ -774,28 +788,28 @@ export class SignedXml {
         return;
       }
     }
-    signedInfoNode = signedInfoNode[0];
+    const signedInfoNode = signedInfoNodes[0];
 
-    if (!callback) {
-      //Synchronous flow
-      this.calculateSignatureValue(doc);
-      signatureDoc.insertBefore(this.createSignature(prefix), signedInfoNode.nextSibling);
-      this.signatureXml = signatureDoc.toString();
-      this.signedXml = doc.toString();
-    } else {
+    if (typeof callback === 'function') {
       const self = this;
       //Asynchronous flow
       this.calculateSignatureValue(doc, function (err, signature) {
         if (err) {
-          callback(err);
+          callback!(err);
         } else {
           self.signatureValue = signature;
           signatureDoc.insertBefore(self.createSignature(prefix), signedInfoNode.nextSibling);
           self.signatureXml = signatureDoc.toString();
           self.signedXml = doc.toString();
-          callback(null, self);
+          callback!(null, self);
         }
       });
+    } else {
+      //Synchronous flow
+      this.calculateSignatureValue(doc);
+      signatureDoc.insertBefore(this.createSignature(prefix), signedInfoNode.nextSibling);
+      this.signatureXml = signatureDoc.toString();
+      this.signedXml = doc.toString();
     }
   }
 
@@ -933,7 +947,7 @@ export class SignedXml {
       );
     } else {
       this.idAttributes.some((idAttribute) => {
-        attr = Utils.findAttr(node, idAttribute, null);
+        attr = Utils.findAttr(node, idAttribute);
         return !!attr; // This will break the loop as soon as a truthy attr is found.
       });
     }
