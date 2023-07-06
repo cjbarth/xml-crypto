@@ -1,12 +1,13 @@
-const expect = require("chai").expect;
+import { expect } from "chai";
 
-const C14nCanonicalization = require("../lib/c14n-canonicalization").C14nCanonicalization;
-const Dom = require("@xmldom/xmldom").DOMParser;
-const select = require("xpath").select;
-const Utils = require("../lib/utils").Utils;
+import { C14nCanonicalization } from "../src/c14n-canonicalization";
+import { DOMParser as Dom } from "@xmldom/xmldom";
+import { select } from "xpath";
+import { Utils } from "../src/utils";
 
 const test_C14nCanonicalization = function (xml, xpath, expected) {
   const doc = new Dom().parseFromString(xml);
+  // @ts-expect-error FIXME
   const elem = select(xpath, doc)[0];
   const can = new C14nCanonicalization();
   const result = can

@@ -6,7 +6,7 @@ import {
 } from "./types";
 import { Utils } from "./utils";
 
-class EnvelopedSignature implements CanonicalizationOrTransformationAlgorithm {
+export class EnvelopedSignature implements CanonicalizationOrTransformationAlgorithm {
   includeComments: boolean = false;
   process(node: Node, options: CanonicalizationOrTransformationAlgorithmProcessOptions) {
     if (null == options.signatureNode) {
@@ -44,7 +44,3 @@ class EnvelopedSignature implements CanonicalizationOrTransformationAlgorithm {
     return "http://www.w3.org/2000/09/xmldsig#enveloped-signature";
   }
 }
-
-module.exports = {
-  EnvelopedSignature,
-};

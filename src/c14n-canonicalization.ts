@@ -1,7 +1,7 @@
 import { CanonicalizationOrTransformationAlgorithm, ProcessOptions } from "./types";
 import { Utils } from "./utils";
 
-class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm {
+export class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm {
   includeComments: boolean = false;
 
   constructor() {}
@@ -262,7 +262,7 @@ class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm 
  *
  * @type { import(".").CanonicalizationOrTransformationAlgorithm}
  */
-class C14nCanonicalizationWithComments extends C14nCanonicalization {
+export class C14nCanonicalizationWithComments extends C14nCanonicalization {
   constructor() {
     super();
     this.includeComments = true;
@@ -272,8 +272,3 @@ class C14nCanonicalizationWithComments extends C14nCanonicalization {
     return "http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments";
   }
 }
-
-module.exports = {
-  C14nCanonicalization,
-  C14nCanonicalizationWithComments,
-};

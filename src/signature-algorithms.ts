@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import { SignatureAlgorithm, createOptionalCallbackFunction } from "./types";
 
-class RsaSha1 implements SignatureAlgorithm {
+export class RsaSha1 implements SignatureAlgorithm {
   constructor() {}
 
   getSignature = createOptionalCallbackFunction(
@@ -29,7 +29,7 @@ class RsaSha1 implements SignatureAlgorithm {
   };
 }
 
-class RsaSha256 implements SignatureAlgorithm {
+export class RsaSha256 implements SignatureAlgorithm {
   constructor() {}
   getSignature = createOptionalCallbackFunction(
     (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string => {
@@ -56,7 +56,7 @@ class RsaSha256 implements SignatureAlgorithm {
   };
 }
 
-class RsaSha512 implements SignatureAlgorithm {
+export class RsaSha512 implements SignatureAlgorithm {
   constructor() {}
   getSignature = createOptionalCallbackFunction(
     (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string => {
@@ -83,7 +83,7 @@ class RsaSha512 implements SignatureAlgorithm {
   };
 }
 
-class HmacSha1 implements SignatureAlgorithm {
+export class HmacSha1 implements SignatureAlgorithm {
   constructor() {}
   getSignature = createOptionalCallbackFunction(
     (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string => {
@@ -109,5 +109,3 @@ class HmacSha1 implements SignatureAlgorithm {
     return "http://www.w3.org/2000/09/xmldsig#hmac-sha1";
   };
 }
-
-export { RsaSha1, RsaSha256, RsaSha512, HmacSha1 };

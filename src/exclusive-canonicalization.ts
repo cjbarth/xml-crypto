@@ -12,7 +12,7 @@ function isPrefixInScope(prefixesInScope, prefix, namespaceURI) {
   return ret;
 }
 
-class ExclusiveCanonicalization implements CanonicalizationOrTransformationAlgorithm {
+export class ExclusiveCanonicalization implements CanonicalizationOrTransformationAlgorithm {
   includeComments: boolean = false;
 
   constructor() {}
@@ -316,7 +316,7 @@ class ExclusiveCanonicalization implements CanonicalizationOrTransformationAlgor
   }
 }
 
-class ExclusiveCanonicalizationWithComments extends ExclusiveCanonicalization {
+export class ExclusiveCanonicalizationWithComments extends ExclusiveCanonicalization {
   constructor() {
     super();
     this.includeComments = true;
@@ -326,8 +326,3 @@ class ExclusiveCanonicalizationWithComments extends ExclusiveCanonicalization {
     return "http://www.w3.org/2001/10/xml-exc-c14n#WithComments";
   }
 }
-
-module.exports = {
-  ExclusiveCanonicalization,
-  ExclusiveCanonicalizationWithComments,
-};

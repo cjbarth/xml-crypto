@@ -1,13 +1,13 @@
-const expect = require("chai").expect;
+import { expect } from "chai";
 
-const c14nWithComments =
-  require("../lib/exclusive-canonicalization").ExclusiveCanonicalizationWithComments;
-const Dom = require("@xmldom/xmldom").DOMParser;
-const select = require("xpath").select;
-const SignedXml = require("../lib/signed-xml.js").SignedXml;
+import { ExclusiveCanonicalizationWithComments as c14nWithComments } from "../src/exclusive-canonicalization";
+import { DOMParser as Dom } from "@xmldom/xmldom";
+import { select } from "xpath";
+import { SignedXml } from "../src/index";
 
 const compare = function (xml, xpath, expected, inclusiveNamespacesPrefixList) {
   const doc = new Dom().parseFromString(xml);
+  // @ts-expect-error FIXME
   const elem = select(xpath, doc)[0];
   const can = new c14nWithComments();
   const result = can
@@ -19,14 +19,17 @@ const compare = function (xml, xpath, expected, inclusiveNamespacesPrefixList) {
 
 describe("Exclusive canonicalization with comments", function () {
   it("Exclusive canonicalization works on xml with no namespaces", function () {
+    // @ts-expect-error FIXME
     compare("<root><child>123</child></root>", "//*", "<root><child>123</child></root>");
   });
 
   it("Exclusive canonicalization works on inner xpath", function () {
+    // @ts-expect-error FIXME
     compare("<root><child>123</child></root>", "//*[local-name(.)='child']", "<child>123</child>");
   });
 
   it("Exclusive canonicalization works on xml with prefixed namespaces defined in output nodes", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><p:child xmlns:p="s"><inner>123</inner></p:child></root>',
       "//*[local-name(.)='child']",
@@ -35,6 +38,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("element used prefixed ns which is also the default", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><child xmlns="s"><p:inner xmlns:p="s">123</p:inner></child></root>',
       "//*[local-name(.)='child']",
@@ -43,6 +47,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with prefixed namespaces defined in output nodes. ns definition is not duplicated on each usage", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><p:child xmlns:p="ns"><p:inner>123</p:inner></p:child></root>',
       "//*[local-name(.)='child']",
@@ -51,6 +56,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with prefixed namespaces defined in output nodes but before used", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><child xmlns:p="ns"><p:inner>123</p:inner></child></root>',
       "//*[local-name(.)='child']",
@@ -59,6 +65,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with prefixed namespaces defined outside output nodes", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns:p="ns"><p:child>123</p:child></root>',
       "//*[local-name(.)='child']",
@@ -103,6 +110,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with default namespace inside output nodes", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><child><inner xmlns="ns">123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -111,6 +119,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with multiple different default namespaces", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns="ns1"><child xmlns="ns2"><inner xmlns="ns3">123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -119,6 +128,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with multiple similar default namespaces", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns="ns1"><child xmlns="ns2"><inner xmlns="ns2">123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -127,6 +137,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with default namespace outside output nodes", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns="ns"><child><inner>123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -135,6 +146,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works when prefixed namespace is defined in output nodes not in the parent chain of who needs it", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><child><p:inner1 xmlns:p="foo" /><p:inner2 xmlns:p="foo" /></child></root>',
       "//*[local-name(.)='child']",
@@ -143,6 +155,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with unordered attributes", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><child xmlns:z="ns2" xmlns:p="ns1" p:name="val1" z:someAttr="zval" Id="value" z:testAttr="ztestAttr" someAttr="someAttrVal" p:address="val2"><inner>123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -151,10 +164,12 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization sorts upper case attributes before lower case", function () {
+    // @ts-expect-error FIXME
     compare('<x id="" Id=""></x>', "//*[local-name(.)='x']", '<x Id="" id=""></x>');
   });
 
   it("C14N#WithComments retains Comments", function () {
+    // @ts-expect-error FIXME
     compare(
       '<x id="" Id=""><!-- Comment --></x>',
       "//*[local-name(.)='x']",
@@ -163,6 +178,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with attributes with different namespace than element", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><child xmlns="bla" xmlns:p="foo" p:attr="val"><inner>123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -171,6 +187,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on xml with attribute and element values with special characters", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root><child><inner attr="&amp;11">&amp;11</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -179,6 +196,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization preserves white space in values", function () {
+    // @ts-expect-error FIXME
     compare(
       "<root><child><inner>12\n3\t</inner></child></root>",
       "//*[local-name(.)='child']",
@@ -187,6 +205,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization preserves white space between elements", function () {
+    // @ts-expect-error FIXME
     compare(
       "<root><child><inner>123</inner>\n</child></root>",
       "//*[local-name(.)='child']",
@@ -195,6 +214,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization turns empty element to start-end tag pairs", function () {
+    // @ts-expect-error FIXME
     compare(
       "<root><child><inner /></child></root>",
       "//*[local-name(.)='child']",
@@ -203,6 +223,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization preserves empty start-end tag pairs", function () {
+    // @ts-expect-error FIXME
     compare(
       "<root><child><inner></inner></child></root>",
       "//*[local-name(.)='child']",
@@ -211,6 +232,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization with empty default namespace outside output nodes", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns=""><child><inner>123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -229,6 +251,7 @@ describe("Exclusive canonicalization with comments", function () {
     */
 
   it("Exclusive canonicalization with empty default namespace inside output nodes", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns="foo"><child><inner xmlns="">123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -237,6 +260,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("The XML declaration and document type declaration (DTD) are removed", function () {
+    // @ts-expect-error FIXME
     compare(
       '<?xml version="1.0" encoding="utf-8"?><root><child><inner>123</inner></child></root>',
       "//*[local-name(.)='child']",
@@ -255,6 +279,7 @@ describe("Exclusive canonicalization with comments", function () {
     */
 
   it("Attribute value delimiters are set to quotation marks (double quotes)", function () {
+    // @ts-expect-error FIXME
     compare(
       "<root><child xmlns='ns'><inner attr='value'>123 </inner></child></root>",
       "//*[local-name(.)='child']",
@@ -263,6 +288,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("CDATA sections are replaced with their character content", function () {
+    // @ts-expect-error FIXME
     compare(
       "<root><child><inner><![CDATA[foo & bar in the <x>123</x>]]></inner></child></root>",
       "//*[local-name(.)='child']",
@@ -271,6 +297,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("SignedInfo canonization", function () {
+    // @ts-expect-error FIXME
     compare(
       '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/03/addressing" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"><soap:Header><wsa:Action wsu:Id="Id-fbcf79b7-9c1b-4e51-b3da-7d6c237be1ec">http://stockservice.contoso.com/wse/samples/2003/06/StockQuoteRequest</wsa:Action><wsa:MessageID wsu:Id="Id-02b76fe1-945c-4e26-a8a5-6650285bbd4c">uuid:6250c037-bcde-40ab-82b3-3a08efc86cdc</wsa:MessageID><wsa:ReplyTo wsu:Id="Id-ccc937f4-8ec8-416a-b97b-0b612a69b040"><wsa:Address>http://schemas.xmlsoap.org/ws/2004/03/addressing/role/anonymous</wsa:Address></wsa:ReplyTo><wsa:To wsu:Id="Id-fa48ae82-88bb-4bf1-9c0d-4eb1de66c4fc">http://localhost:8889/</wsa:To><wsse:Security soap:mustUnderstand="1"><wsu:Timestamp wsu:Id="Timestamp-4d2cce4a-39fb-4d7d-b0d5-17d583255ef5"><wsu:Created>2008-09-01T17:44:21Z</wsu:Created><wsu:Expires>2008-09-01T17:49:21Z</wsu:Expires></wsu:Timestamp><wsse:BinarySecurityToken ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3" EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="SecurityToken-d68c34d4-be89-4a29-aecc-971bce003ed3">MIIBxDCCAW6gAwIBAgIQxUSXFzWJYYtOZnmmuOMKkjANBgkqhkiG9w0BAQQFADAWMRQwEgYDVQQDEwtSb290IEFnZW5jeTAeFw0wMzA3MDgxODQ3NTlaFw0zOTEyMzEyMzU5NTlaMB8xHTAbBgNVBAMTFFdTRTJRdWlja1N0YXJ0Q2xpZW50MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+L6aB9x928noY4+0QBsXnxkQE4quJl7c3PUPdVu7k9A02hRG481XIfWhrDY5i7OEB7KGW7qFJotLLeMec/UkKUwCgv3VvJrs2nE9xO3SSWIdNzADukYh+Cxt+FUU6tUkDeqg7dqwivOXhuOTRyOI3HqbWTbumaLdc8jufz2LhaQIDAQABo0swSTBHBgNVHQEEQDA+gBAS5AktBh0dTwCNYSHcFmRjoRgwFjEUMBIGA1UEAxMLUm9vdCBBZ2VuY3mCEAY3bACqAGSKEc+41KpcNfQwDQYJKoZIhvcNAQEEBQADQQAfIbnMPVYkNNfX1tG1F+qfLhHwJdfDUZuPyRPucWF5qkh6sSdWVBY5sT/txBnVJGziyO8DPYdu2fPMER8ajJfl</wsse:BinarySecurityToken><Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" /><Reference URI="#Id-fbcf79b7-9c1b-4e51-b3da-7d6c237be1ec"><Transforms><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /><DigestValue>+465BlJx5xOfHsIFezQt0MS1vZQ=</DigestValue></Reference><Reference URI="#Id-02b76fe1-945c-4e26-a8a5-6650285bbd4c"><Transforms><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /><DigestValue>jEe8rnaaqBWZQe+xHBQXriVG99o=</DigestValue></Reference><Reference URI="#Id-ccc937f4-8ec8-416a-b97b-0b612a69b040"><Transforms><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /><DigestValue>W45ginYdBVqOqEaqPI2piZMPReA=</DigestValue></Reference><Reference URI="#Id-fa48ae82-88bb-4bf1-9c0d-4eb1de66c4fc"><Transforms><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /><DigestValue>m2VlWz/ZDTWL7FREHK+wpKhvjJM=</DigestValue></Reference><Reference URI="#Timestamp-4d2cce4a-39fb-4d7d-b0d5-17d583255ef5"><Transforms><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /><DigestValue>Qws229qmAzSTZ4OKmAUWgl0PWWo=</DigestValue></Reference><Reference URI="#Id-0175a715-4db3-4886-8af1-991b1472e7f4"><Transforms><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /><DigestValue>iEazGnkPY5caCWVZOHyR87CZ1h0=</DigestValue></Reference></SignedInfo><SignatureValue>Fkm7AbwiJCiOzY8ldfuA9pTW1G+EtE+UX4Cv7SoMIqeUdfWRDVHZpJAQyf7aoQnlpJNV/3k9L1PT6rJbfV478CkULJENPLm1m0fmDeLzhIHDEANuzp/AirC60tMD5jCARb4B4Nr/6bTmoyDQsTY8VLRiiINng7Mpweg1FZvd8a0=</SignatureValue><KeyInfo><wsse:SecurityTokenReference><wsse:Reference URI="#SecurityToken-d68c34d4-be89-4a29-aecc-971bce003ed3" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3" /></wsse:SecurityTokenReference></KeyInfo></Signature></wsse:Security></soap:Header><soap:Body wsu:Id="Id-0175a715-4db3-4886-8af1-991b1472e7f4"><StockQuoteRequest xmlns="http://stockservice.contoso.com/wse/samples/2003/06"><symbols><Symbol>FABRIKAM</Symbol></symbols></StockQuoteRequest></soap:Body></soap:Envelope>',
       "//*[local-name(.)='SignedInfo']",
@@ -279,6 +306,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("Exclusive canonicalization works on complex xml", function () {
+    // @ts-expect-error FIXME
     compare(
       '<?xml version="1.0" encoding="utf-8"?>\n' +
         '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">\n' +
@@ -352,8 +380,10 @@ describe("Exclusive canonicalization with comments", function () {
   it("Multiple Canonicalization with namespace definition outside of signed element", function () {
     //var doc = new Dom().parseFromString("<x xmlns:p=\"myns\"><p:y><ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\"></ds:Signature></p:y></x>")
     const doc = new Dom().parseFromString('<x xmlns:p="myns"><p:y></p:y></x>');
+    // @ts-expect-error FIXME
     const node = select("//*[local-name(.)='y']", doc)[0];
     const sig = new SignedXml();
+    // @ts-expect-error FIXME
     const res = sig.getCanonXml(
       [
         "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
@@ -371,9 +401,11 @@ describe("Exclusive canonicalization with comments", function () {
     const xml =
       '<x><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" /><y><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" /></y></x>';
     const doc = new Dom().parseFromString(xml);
+    // @ts-expect-error FIXME
     const node = select("//*[local-name(.)='y']", doc)[0];
     const sig = new SignedXml();
     const transforms = ["http://www.w3.org/2000/09/xmldsig#enveloped-signature"];
+    // @ts-expect-error FIXME
     const res = sig.getCanonXml(transforms, node);
     expect(res).to.equal("<y/>");
   });
@@ -384,6 +416,7 @@ describe("Exclusive canonicalization with comments", function () {
   - An element's namespace nodes are sorted lexicographically by local name (the default namespace node, if one exists, has no local name and is therefore lexicographically least). \
   - An element's attribute nodes are sorted lexicographically with namespace URI as the primary key and local name as the secondary key (an empty namespace URI is lexicographically least). \
     Lexicographic comparison, which orders strings from least to greatest alphabetically, is based on the UCS codepoint values, which is equivalent to lexicographic ordering based on UTF-8.", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns:b="moo" b:attr1="a1" a:attr1="a1" b:attr4="b4" xmlns="foo" b:attr3="a3" xmlns:a="zoo"></root>',
       "//*[local-name(.)='root']",
@@ -392,6 +425,7 @@ describe("Exclusive canonicalization with comments", function () {
   });
 
   it("saml attributed order (bug #25)", function () {
+    // @ts-expect-error FIXME
     compare(
       '<root xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" samlp:a="1" saml:a="1"></root>',
       "//*[local-name(.)='root']",

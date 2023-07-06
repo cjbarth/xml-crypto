@@ -81,11 +81,11 @@ export module Utils {
     "-----BEGIN CERTIFICATE-----[^-]*-----END CERTIFICATE-----",
     "g"
   );
-  const PEM_FORMAT_REGEX = new RegExp(
+  export const PEM_FORMAT_REGEX = new RegExp(
     "^-----BEGIN [A-Z\x20]{1,48}-----([^-]*)-----END [A-Z\x20]{1,48}-----$",
     "s"
   );
-  const BASE64_REGEX = new RegExp(
+  export const BASE64_REGEX = new RegExp(
     "^(?:[A-Za-z0-9\\+\\/]{4}\\n{0,1})*(?:[A-Za-z0-9\\+\\/]{2}==|[A-Za-z0-9\\+\\/]{3}=)?$",
     "s"
   );

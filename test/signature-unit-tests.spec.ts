@@ -1,13 +1,14 @@
-const select = require("xpath").select;
-const dom = require("@xmldom/xmldom").DOMParser;
-const SignedXml = require("../lib/signed-xml.js").SignedXml;
-const fs = require("fs");
-const crypto = require("crypto");
-const expect = require("chai").expect;
+import { select } from "xpath";
+import { DOMParser as Dom } from "@xmldom/xmldom";
+import { SignedXml } from "../src/index";
+import * as fs from "fs";
+import * as crypto from "crypto";
+import { expect } from "chai";
 
 describe("Signature unit tests", function () {
   function verifySignature(xml, mode) {
-    const doc = new dom().parseFromString(xml);
+    const doc = new Dom().parseFromString(xml);
+    // @ts-expect-error FIXME
     const node = select(
       "//*[local-name(.)='Signature' and namespace-uri(.)='http://www.w3.org/2000/09/xmldsig#']",
       doc
@@ -33,7 +34,8 @@ describe("Signature unit tests", function () {
 
   function passLoadSignature(file, toString) {
     const xml = fs.readFileSync(file).toString();
-    const doc = new dom().parseFromString(xml);
+    const doc = new Dom().parseFromString(xml);
+    // @ts-expect-error FIXME
     const node = select(
       "/*//*[local-name(.)='Signature' and namespace-uri(.)='http://www.w3.org/2000/09/xmldsig#']",
       doc
@@ -49,16 +51,20 @@ describe("Signature unit tests", function () {
       "http://www.w3.org/2000/09/xmldsig#rsa-sha1"
     );
 
+    // @ts-expect-error FIXME
     expect(sig.signatureValue, "wrong signature value").to.equal(
       "PI2xGt3XrVcxYZ34Kw7nFdq75c7Mmo7J0q7yeDhBprHuJal/KV9KyKG+Zy3bmQIxNwkPh0KMP5r1YMTKlyifwbWK0JitRCSa0Fa6z6+TgJi193yiR5S1MQ+esoQT0RzyIOBl9/GuJmXx/1rXnqrTxmL7UxtqKuM29/eHwF0QDUI="
     );
 
+    // @ts-expect-error FIXME
     const keyInfo = select(
       "//*[local-name(.)='KeyInfo']/*[local-name(.)='dummyKey']",
+      // @ts-expect-error FIXME
       sig.keyInfo[0]
     )[0];
     expect(keyInfo.firstChild.data, "keyInfo clause not correctly loaded").to.equal("1234");
 
+    // @ts-expect-error FIXME
     expect(sig.references.length).to.equal(3);
 
     const digests = [
@@ -67,14 +73,18 @@ describe("Signature unit tests", function () {
       "sH1gxKve8wlU8LlFVa2l6w3HMJ0=",
     ];
 
+    // @ts-expect-error FIXME
     for (let i = 0; i < sig.references.length; i++) {
+      // @ts-expect-error FIXME
       const ref = sig.references[i];
       const expectedUri = "#_" + i;
       expect(
         ref.uri,
         "wrong uri for index " + i + ". expected: " + expectedUri + " actual: " + ref.uri
       ).to.equal(expectedUri);
+      // @ts-expect-error FIXME
       expect(ref.transforms.length).to.equal(1);
+      // @ts-expect-error FIXME
       expect(ref.transforms[0]).to.equal("http://www.w3.org/2001/10/xml-exc-c14n#");
       expect(ref.digestValue).to.equal(digests[i]);
       expect(ref.digestAlgorithm).to.equal("http://www.w3.org/2000/09/xmldsig#sha1");
@@ -97,8 +107,9 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[local-name(.)='x']");
     sig.computeSignature(xml);
     const signedXml = sig.getOriginalXmlWithIds();
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const attrs = select("//@*", doc);
+    // @ts-expect-error FIXME
     expect(attrs.length, "wrong number of attributes").to.equal(2);
   }
 
@@ -107,6 +118,7 @@ describe("Signature unit tests", function () {
       return;
     }
     const node = select(xpath, doc);
+    // @ts-expect-error FIXME
     expect(node.length, "xpath " + xpath + " not found").to.equal(1);
   }
 
@@ -121,7 +133,7 @@ describe("Signature unit tests", function () {
 
     sig.computeSignature(xml);
     const signedXml = sig.getOriginalXmlWithIds();
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
 
     const op = nsMode === "equal" ? "=" : "!=";
 
@@ -150,11 +162,12 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[local-name(.)='name']");
 
     sig.computeSignature(xml, {
+      // @ts-expect-error FIXME
       attrs: attrs,
     });
 
     const signedXml = sig.getSignatureXml();
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const signatureNode = doc.documentElement;
 
     expect(
@@ -184,14 +197,16 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[@wsu:Id]");
 
     sig.computeSignature(xml, {
+      // @ts-expect-error FIXME
       existingPrefixes: {
         wsu: "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd",
       },
     });
 
     const signedXml = sig.getSignatureXml();
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const references = select("//*[local-name(.)='Reference']", doc);
+    // @ts-expect-error FIXME
     expect(references.length).to.equal(2);
   }
 
@@ -221,9 +236,10 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[local-name(.)='name']");
     sig.computeSignature(xml);
 
-    const doc = new dom().parseFromString(sig.getSignedXml());
+    const doc = new Dom().parseFromString(sig.getSignedXml());
 
     expect(
+      // @ts-expect-error FIXME
       doc.documentElement.lastChild.localName,
       "the signature must be appended to the root node by default"
     ).to.equal("Signature");
@@ -237,13 +253,15 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[local-name(.)='repository']");
 
     sig.computeSignature(xml, {
+      // @ts-expect-error FIXME
       location: {
         reference: "/root/name",
         action: "append",
       },
     });
 
-    const doc = new dom().parseFromString(sig.getSignedXml());
+    const doc = new Dom().parseFromString(sig.getSignedXml());
+    // @ts-expect-error FIXME
     const referenceNode = select("/root/name", doc)[0];
 
     expect(
@@ -260,13 +278,15 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[local-name(.)='repository']");
 
     sig.computeSignature(xml, {
+      // @ts-expect-error FIXME
       location: {
         reference: "/root/name",
         action: "prepend",
       },
     });
 
-    const doc = new dom().parseFromString(sig.getSignedXml());
+    const doc = new Dom().parseFromString(sig.getSignedXml());
+    // @ts-expect-error FIXME
     const referenceNode = select("/root/name", doc)[0];
 
     expect(
@@ -283,13 +303,15 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[local-name(.)='repository']");
 
     sig.computeSignature(xml, {
+      // @ts-expect-error FIXME
       location: {
         reference: "/root/name",
         action: "before",
       },
     });
 
-    const doc = new dom().parseFromString(sig.getSignedXml());
+    const doc = new Dom().parseFromString(sig.getSignedXml());
+    // @ts-expect-error FIXME
     const referenceNode = select("/root/name", doc)[0];
 
     expect(
@@ -306,13 +328,15 @@ describe("Signature unit tests", function () {
     sig.addReference("//*[local-name(.)='repository']");
 
     sig.computeSignature(xml, {
+      // @ts-expect-error FIXME
       location: {
         reference: "/root/name",
         action: "after",
       },
     });
 
-    const doc = new dom().parseFromString(sig.getSignedXml());
+    const doc = new Dom().parseFromString(sig.getSignedXml());
+    // @ts-expect-error FIXME
     const referenceNode = select("/root/name", doc)[0];
 
     expect(
@@ -322,42 +346,42 @@ describe("Signature unit tests", function () {
   });
 
   it("signer creates signature with correct structure", function () {
-    function DummyDigest() {
-      this.getHash = function () {
+    class DummyDigest {
+      getHash = function () {
         return "dummy digest";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy digest algorithm";
       };
     }
 
-    function DummySignatureAlgorithm() {
-      this.getSignature = function () {
+    class DummySignatureAlgorithm {
+      getSignature = function () {
         return "dummy signature";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy algorithm";
       };
     }
 
-    function DummyTransformation() {
-      this.process = function () {
+    class DummyTransformation {
+      process = function () {
         return "< x/>";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy transformation";
       };
     }
 
-    function DummyCanonicalization() {
-      this.process = function () {
+    class DummyCanonicalization {
+      process = function () {
         return "< x/>";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy canonicalization";
       };
     }
@@ -365,15 +389,19 @@ describe("Signature unit tests", function () {
     const xml = '<root><x xmlns="ns"></x><y attr="value"></y><z><w></w></z></root>';
     const sig = new SignedXml();
 
+    // @ts-expect-error FIXME
     sig.CanonicalizationAlgorithms["http://DummyTransformation"] = DummyTransformation;
+    // @ts-expect-error FIXME
     sig.CanonicalizationAlgorithms["http://DummyCanonicalization"] = DummyCanonicalization;
     sig.HashAlgorithms["http://dummyDigest"] = DummyDigest;
+    // @ts-expect-error FIXME
     sig.SignatureAlgorithms["http://dummySignatureAlgorithm"] = DummySignatureAlgorithm;
 
     sig.signatureAlgorithm = "http://dummySignatureAlgorithm";
     sig.getKeyInfoContent = function () {
       return "dummy key info";
     };
+    // @ts-expect-error FIXME
     sig.canonicalizationAlgorithm = "http://DummyCanonicalization";
     sig.privateKey = "";
 
@@ -477,42 +505,42 @@ describe("Signature unit tests", function () {
   it("signer creates signature with correct structure (with prefix)", function () {
     const prefix = "ds";
 
-    function DummyDigest() {
-      this.getHash = function () {
+    class DummyDigest {
+      getHash = function () {
         return "dummy digest";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy digest algorithm";
       };
     }
 
-    function DummySignatureAlgorithm() {
-      this.getSignature = function () {
+    class DummySignatureAlgorithm {
+      getSignature = function () {
         return "dummy signature";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy algorithm";
       };
     }
 
-    function DummyTransformation() {
-      this.process = function () {
+    class DummyTransformation {
+      process = function () {
         return "< x/>";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy transformation";
       };
     }
 
-    function DummyCanonicalization() {
-      this.process = function () {
+    class DummyCanonicalization {
+      process = function () {
         return "< x/>";
       };
 
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "dummy canonicalization";
       };
     }
@@ -520,15 +548,19 @@ describe("Signature unit tests", function () {
     const xml = '<root><x xmlns="ns"></x><y attr="value"></y><z><w></w></z></root>';
     const sig = new SignedXml();
 
+    // @ts-expect-error FIXME
     sig.CanonicalizationAlgorithms["http://DummyTransformation"] = DummyTransformation;
+    // @ts-expect-error FIXME
     sig.CanonicalizationAlgorithms["http://DummyCanonicalization"] = DummyCanonicalization;
     sig.HashAlgorithms["http://dummyDigest"] = DummyDigest;
+    // @ts-expect-error FIXME
     sig.SignatureAlgorithms["http://dummySignatureAlgorithm"] = DummySignatureAlgorithm;
 
     sig.signatureAlgorithm = "http://dummySignatureAlgorithm";
     sig.getKeyInfoContent = function () {
       return "<ds:dummy>dummy key info</ds:dummy>";
     };
+    // @ts-expect-error FIXME
     sig.canonicalizationAlgorithm = "http://DummyCanonicalization";
     sig.privateKey = "";
 
@@ -548,6 +580,7 @@ describe("Signature unit tests", function () {
       "http://dummyDigest"
     );
 
+    // @ts-expect-error FIXME
     sig.computeSignature(xml, { prefix: prefix });
     const signature = sig.getSignatureXml();
 
@@ -635,6 +668,7 @@ describe("Signature unit tests", function () {
       '<root><x xmlns="ns" Id="_0"></x><y attr="value" Id="_1"></y><z><w Id="_2"></w></z></root>';
     const sig = new SignedXml();
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    // @ts-expect-error FIXME
     sig.publicCert = null;
 
     sig.addReference("//*[local-name(.)='x']");
@@ -678,15 +712,15 @@ describe("Signature unit tests", function () {
   });
 
   it("signer creates correct signature values using async callback", function () {
-    function DummySignatureAlgorithm() {
-      this.getSignature = function (signedInfo, privateKey, callback) {
+    class DummySignatureAlgorithm {
+      getSignature = function (signedInfo, privateKey, callback) {
         const signer = crypto.createSign("RSA-SHA1");
         signer.update(signedInfo);
         const res = signer.sign(privateKey, "base64");
         //Do some asynchronous things here
         callback(null, res);
       };
-      this.getAlgorithmName = function () {
+      getAlgorithmName = function () {
         return "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
       };
     }
@@ -694,9 +728,11 @@ describe("Signature unit tests", function () {
     const xml =
       '<root><x xmlns="ns" Id="_0"></x><y attr="value" Id="_1"></y><z><w Id="_2"></w></z></root>';
     const sig = new SignedXml();
+    // @ts-expect-error FIXME
     sig.SignatureAlgorithms["http://dummySignatureAlgorithmAsync"] = DummySignatureAlgorithm;
     sig.signatureAlgorithm = "http://dummySignatureAlgorithmAsync";
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    // @ts-expect-error FIXME
     sig.publicCert = null;
 
     sig.addReference("//*[local-name(.)='x']");
@@ -741,25 +777,37 @@ describe("Signature unit tests", function () {
   });
 
   it("correctly loads signature", function () {
+    // @ts-expect-error FIXME
     passLoadSignature("./test/static/valid_signature.xml");
     passLoadSignature("./test/static/valid_signature.xml", true);
+    // @ts-expect-error FIXME
     passLoadSignature("./test/static/valid_signature_with_root_level_sig_namespace.xml");
   });
 
   it("verify valid signature", function () {
+    // @ts-expect-error FIXME
     passValidSignature("./test/static/valid_signature.xml");
+    // @ts-expect-error FIXME
     passValidSignature("./test/static/valid_signature_with_lowercase_id_attribute.xml");
     passValidSignature("./test/static/valid_signature wsu.xml", "wssecurity");
+    // @ts-expect-error FIXME
     passValidSignature("./test/static/valid_signature_with_reference_keyInfo.xml");
+    // @ts-expect-error FIXME
     passValidSignature("./test/static/valid_signature_with_whitespace_in_digestvalue.xml");
+    // @ts-expect-error FIXME
     passValidSignature("./test/static/valid_signature_utf8.xml");
+    // @ts-expect-error FIXME
     passValidSignature("./test/static/valid_signature_with_unused_prefixes.xml");
   });
 
   it("fail invalid signature", function () {
+    // @ts-expect-error FIXME
     failInvalidSignature("./test/static/invalid_signature - signature value.xml");
+    // @ts-expect-error FIXME
     failInvalidSignature("./test/static/invalid_signature - hash.xml");
+    // @ts-expect-error FIXME
     failInvalidSignature("./test/static/invalid_signature - non existing reference.xml");
+    // @ts-expect-error FIXME
     failInvalidSignature("./test/static/invalid_signature - changed content.xml");
     failInvalidSignature(
       "./test/static/invalid_signature - wsu - invalid signature value.xml",
@@ -780,6 +828,7 @@ describe("Signature unit tests", function () {
     const xml = "<root><x /></root>";
     const sig = new SignedXml();
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    // @ts-expect-error FIXME
     sig.publicCert = null;
 
     sig.addReference(
@@ -794,7 +843,8 @@ describe("Signature unit tests", function () {
 
     sig.computeSignature(xml);
     const signedXml = sig.getSignedXml();
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
+    // @ts-expect-error FIXME
     const URI = select("//*[local-name(.)='Reference']/@URI", doc)[0];
     expect(URI.value, "uri should be empty but instead was " + URI.value).to.equal("");
   });
@@ -808,6 +858,7 @@ describe("Signature unit tests", function () {
 
     try {
       sig.computeSignature(xml, {
+        // @ts-expect-error FIXME
         location: {
           reference: "/root/foobar",
           action: "append",
@@ -847,6 +898,7 @@ describe("Signature unit tests", function () {
     sig.getKeyInfoContent = getKeyInfoContentWithAssertionId.bind(this, { assertionId });
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
     sig.computeSignature(xml, {
+      // @ts-expect-error FIXME
       prefix: "ds",
       location: {
         reference: "//Assertion",
@@ -867,6 +919,7 @@ describe("Signature unit tests", function () {
     const xml = "<root><x /></root>";
     const sig = new SignedXml();
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    // @ts-expect-error FIXME
     sig.publicCert = null;
 
     sig.addReference(
@@ -881,13 +934,15 @@ describe("Signature unit tests", function () {
     sig.computeSignature(xml);
     const signedXml = sig.getSignedXml();
 
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const inclusiveNamespaces = select(
       "//*[local-name(.)='Reference']/*[local-name(.)='Transforms']/*[local-name(.)='Transform']/*[local-name(.)='InclusiveNamespaces']",
       doc.documentElement
     );
+    // @ts-expect-error FIXME
     expect(inclusiveNamespaces.length, "InclusiveNamespaces element should exist").to.equal(1);
 
+    // @ts-expect-error FIXME
     const prefixListAttribute = inclusiveNamespaces[0].getAttribute("PrefixList");
     expect(
       prefixListAttribute,
@@ -899,6 +954,7 @@ describe("Signature unit tests", function () {
     const xml = "<root><x /></root>";
     const sig = new SignedXml();
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    // @ts-expect-error FIXME
     sig.publicCert = null;
 
     sig.addReference(
@@ -913,12 +969,13 @@ describe("Signature unit tests", function () {
     sig.computeSignature(xml);
     const signedXml = sig.getSignedXml();
 
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const inclusiveNamespaces = select(
       "//*[local-name(.)='Reference']/*[local-name(.)='Transforms']/*[local-name(.)='Transform']/*[local-name(.)='InclusiveNamespaces']",
       doc.documentElement
     );
 
+    // @ts-expect-error FIXME
     expect(inclusiveNamespaces.length, "InclusiveNamespaces element should not exist").to.equal(0);
   });
 
@@ -926,6 +983,7 @@ describe("Signature unit tests", function () {
     const xml = "<root><x /></root>";
     const sig = new SignedXml({ inclusiveNamespacesPrefixList: "prefix1 prefix2" });
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    // @ts-expect-error FIXME
     sig.publicCert = null;
 
     sig.addReference(
@@ -937,17 +995,19 @@ describe("Signature unit tests", function () {
     sig.computeSignature(xml);
     const signedXml = sig.getSignedXml();
 
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const inclusiveNamespaces = select(
       "//*[local-name(.)='CanonicalizationMethod']/*[local-name(.)='InclusiveNamespaces']",
       doc.documentElement
     );
 
     expect(
+      // @ts-expect-error FIXME
       inclusiveNamespaces.length,
       "InclusiveNamespaces element should exist inside CanonicalizationMethod"
     ).to.equal(1);
 
+    // @ts-expect-error FIXME
     const prefixListAttribute = inclusiveNamespaces[0].getAttribute("PrefixList");
     expect(
       prefixListAttribute,
@@ -959,6 +1019,7 @@ describe("Signature unit tests", function () {
     const xml = "<root><x /></root>";
     const sig = new SignedXml(); // Omit inclusiveNamespacesPrefixList property
     sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    // @ts-expect-error FIXME
     sig.publicCert = null;
 
     sig.addReference(
@@ -970,13 +1031,14 @@ describe("Signature unit tests", function () {
     sig.computeSignature(xml);
     const signedXml = sig.getSignedXml();
 
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const inclusiveNamespaces = select(
       "//*[local-name(.)='CanonicalizationMethod']/*[local-name(.)='InclusiveNamespaces']",
       doc.documentElement
     );
 
     expect(
+      // @ts-expect-error FIXME
       inclusiveNamespaces.length,
       "InclusiveNamespaces element should not exist inside CanonicalizationMethod"
     ).to.equal(0);
@@ -995,16 +1057,19 @@ describe("Signature unit tests", function () {
     sig.computeSignature(xml);
     const signedXml = sig.getSignedXml();
 
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
     const keyInfoElement = select("//*[local-name(.)='KeyInfo']", doc.documentElement);
+    // @ts-expect-error FIXME
     expect(keyInfoElement.length, "KeyInfo element should exist").to.equal(1);
 
+    // @ts-expect-error FIXME
     const algorithmAttribute = keyInfoElement[0].getAttribute("CustomUri");
     expect(
       algorithmAttribute,
       "KeyInfo element should have the correct CustomUri attribute value"
     ).to.equal("http://www.example.com/keyinfo");
 
+    // @ts-expect-error FIXME
     const customAttribute = keyInfoElement[0].getAttribute("CustomAttribute");
     expect(
       customAttribute,
@@ -1021,12 +1086,15 @@ describe("Signature unit tests", function () {
     sig.computeSignature(xml);
     const signedXml = sig.getSignedXml();
 
-    const doc = new dom().parseFromString(signedXml);
+    const doc = new Dom().parseFromString(signedXml);
 
     const x509certificates = select("//*[local-name(.)='X509Certificate']", doc.documentElement);
+    // @ts-expect-error FIXME
     expect(x509certificates.length, "There should be exactly two certificates").to.equal(2);
 
+    // @ts-expect-error FIXME
     const cert1 = x509certificates[0];
+    // @ts-expect-error FIXME
     const cert2 = x509certificates[1];
     expect(cert1.textContent, "X509Certificate[0] TextContent does not exist").to.exist;
     expect(cert2.textContent, "X509Certificate[1] TextContent does not exist").to.exist;
