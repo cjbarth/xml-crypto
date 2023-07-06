@@ -127,7 +127,7 @@ export module Utils {
     nsArray: NamespacePrefix[] = []
   ): NamespacePrefix[] {
     if (!xpath.isElement(node.parentNode)) {
-      throw new Error("Parent Node must be an element");
+      return nsArray;
     }
 
     const parent: Element = node.parentNode;

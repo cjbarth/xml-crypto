@@ -1,7 +1,6 @@
 import {
   CanonicalizationAlgorithmType,
   CanonicalizationOrTransformationAlgorithm,
-  ComputeSignatureCallback,
   ComputeSignatureOptions,
   GetKeyInfoContentArgs,
   HashAlgorithm,
@@ -11,15 +10,16 @@ import {
   SignatureAlgorithmType,
   SignedXmlOptions,
   CanonicalizationOrTransformAlgorithmType,
-  ErrorBackCallback,
+  ErrorFirstCallback,
 } from "./types";
 
 const xpath = require("xpath");
+const xmldom = require("@xmldom/xmldom");
 const Dom = require("@xmldom/xmldom").DOMParser;
 import { Utils } from "./utils";
 const c14n = require("./c14n-canonicalization");
 const execC14n = require("./exclusive-canonicalization");
-const EnvelopedSignature = require("./enveloped-signature").EnvelopedSignature;
+const envelopedSignatures = require("./enveloped-signature");
 const hashAlgorithms = require("./hash-algorithms");
 const signatureAlgorithms = require("./signature-algorithms");
 import * as crypto from "crypto";
@@ -39,9 +39,8 @@ export class SignedXml {
   /**
    * Rules used to convert an XML document into its canonical form.
    */
-  canonicalizationAlgorithm:
-    | CanonicalizationAlgorithmType
-    | CanonicalizationOrTransformAlgorithmType = "http://www.w3.org/2001/10/xml-exc-c14n#";
+  canonicalizationAlgorithm: CanonicalizationAlgorithmType =
+    "http://www.w3.org/2001/10/xml-exc-c14n#";
   /**
    * It specifies a list of namespace prefixes that should be considered "inclusive" during the canonicalization process.
    */
@@ -77,8 +76,8 @@ export class SignedXml {
    *  To add a new transformation algorithm create a new class that implements the {@link TransformationAlgorithm} interface, and register it here. More info: {@link https://github.com/node-saml/xml-crypto#customizing-algorithms|Customizing Algorithms}
    */
   CanonicalizationAlgorithms: Record<
-    CanonicalizationAlgorithmType | CanonicalizationOrTransformAlgorithmType,
-    CanonicalizationOrTransformationAlgorithm
+    CanonicalizationOrTransformAlgorithmType,
+    new () => CanonicalizationOrTransformationAlgorithm
   > = {
     "http://www.w3.org/TR/2001/REC-xml-c14n-20010315": c14n.C14nCanonicalization,
     "http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments":
@@ -86,13 +85,13 @@ export class SignedXml {
     "http://www.w3.org/2001/10/xml-exc-c14n#": execC14n.ExclusiveCanonicalization,
     "http://www.w3.org/2001/10/xml-exc-c14n#WithComments":
       execC14n.ExclusiveCanonicalizationWithComments,
-    "http://www.w3.org/2000/09/xmldsig#enveloped-signature": EnvelopedSignature,
+    "http://www.w3.org/2000/09/xmldsig#enveloped-signature": envelopedSignatures.EnvelopedSignature,
   };
 
   /**
    * To add a new hash algorithm create a new class that implements the {@link HashAlgorithm} interface, and register it here. More info: {@link https://github.com/node-saml/xml-crypto#customizing-algorithms|Customizing Algorithms}
    */
-  HashAlgorithms: Record<HashAlgorithmType, HashAlgorithm> = {
+  HashAlgorithms: Record<HashAlgorithmType, new () => HashAlgorithm> = {
     "http://www.w3.org/2000/09/xmldsig#sha1": hashAlgorithms.Sha1,
     "http://www.w3.org/2001/04/xmlenc#sha256": hashAlgorithms.Sha256,
     "http://www.w3.org/2001/04/xmlenc#sha512": hashAlgorithms.Sha512,
@@ -101,7 +100,7 @@ export class SignedXml {
   /**
    * To add a new signature algorithm create a new class that implements the {@link SignatureAlgorithm} interface, and register it here. More info: {@link https://github.com/node-saml/xml-crypto#customizing-algorithms|Customizing Algorithms}
    */
-  SignatureAlgorithms: Record<SignatureAlgorithmType, SignatureAlgorithm> = {
+  SignatureAlgorithms: Record<SignatureAlgorithmType, new () => SignatureAlgorithm> = {
     "http://www.w3.org/2000/09/xmldsig#rsa-sha1": signatureAlgorithms.RsaSha1,
     "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256": signatureAlgorithms.RsaSha256,
     "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512": signatureAlgorithms.RsaSha512,
@@ -326,15 +325,15 @@ export class SignedXml {
   }
 
   validateSignatureValue(doc: Document): boolean;
-  validateSignatureValue(doc: Document, callback: ErrorBackCallback<boolean>): void;
-  validateSignatureValue(doc: Document, callback?: ErrorBackCallback<boolean>): boolean | void {
+  validateSignatureValue(doc: Document, callback: ErrorFirstCallback<boolean>): void;
+  validateSignatureValue(doc: Document, callback?: ErrorFirstCallback<boolean>): boolean | void {
     const signedInfoCanon = this.getCanonSignedInfoXml(doc);
     const signer = this.findSignatureAlgorithm(this.signatureAlgorithm);
     const key = this.getCertFromKeyInfo(this.keyInfo) || this.publicCert || this.privateKey;
     if (key == null) {
       throw new Error("KeyInfo or publicCert or privateKey is required to validate signature");
     }
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       signer.verifySignature(signedInfoCanon, key, this.signatureValue, callback);
     } else {
       const res = signer.verifySignature(signedInfoCanon, key, this.signatureValue);
@@ -347,13 +346,13 @@ export class SignedXml {
     }
   }
 
-  calculateSignatureValue(doc: Document, callback?: ErrorBackCallback<string>) {
+  calculateSignatureValue(doc: Document, callback?: ErrorFirstCallback<string>) {
     const signedInfoCanon = this.getCanonSignedInfoXml(doc);
     const signer = this.findSignatureAlgorithm(this.signatureAlgorithm);
     if (this.privateKey == null) {
       throw new Error("Private key is required to compute signature");
     }
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       signer.getSignature(signedInfoCanon, this.privateKey, callback);
     } else {
       this.signatureValue = signer.getSignature(signedInfoCanon, this.privateKey);
@@ -363,25 +362,25 @@ export class SignedXml {
   findSignatureAlgorithm(name: SignatureAlgorithmType) {
     const algo = this.SignatureAlgorithms[name];
     if (algo) {
-      return algo;
+      return new algo();
     } else {
       throw new Error("signature algorithm '" + name + "' is not supported");
     }
   }
 
-  findCanonicalizationAlgorithm(name) {
+  findCanonicalizationAlgorithm(name: CanonicalizationOrTransformAlgorithmType) {
     const algo = this.CanonicalizationAlgorithms[name];
     if (algo) {
-      return algo;
+      return new algo();
     } else {
       throw new Error("canonicalization algorithm '" + name + "' is not supported");
     }
   }
 
-  findHashAlgorithm(name) {
+  findHashAlgorithm(name: HashAlgorithmType) {
     const algo = this.HashAlgorithms[name];
     if (algo) {
-      return algo;
+      return new algo();
     } else {
       throw new Error("hash algorithm '" + name + "' is not supported");
     }
@@ -541,7 +540,10 @@ export class SignedXml {
       }
 
       // This is a little strange, we are looking for children of the last child of `transformsNode`
-      const inclusiveNamespaces = Utils.findChilds(trans, "InclusiveNamespaces");
+      const inclusiveNamespaces = Utils.findChilds(
+        transformsAll[transformsAll.length - 1],
+        "InclusiveNamespaces"
+      );
       if (inclusiveNamespaces.length > 0) {
         //Should really only be one prefix list, but maybe there's some circumstances where more than one to lets handle it
         for (let i = 0; i < inclusiveNamespaces.length; i++) {
@@ -631,7 +633,17 @@ export class SignedXml {
    * @returns void
    * @throws TypeError If the xml can not be parsed.
    */
-  computeSignature(xml: string, callback: ComputeSignatureCallback): void;
+  computeSignature(xml: string): void;
+
+  /**
+   * Compute the signature of the given XML (using the already defined settings).
+   *
+   * @param xml The XML to compute the signature for.
+   * @param callback A callback function to handle the signature computation asynchronously.
+   * @returns void
+   * @throws TypeError If the xml can not be parsed.
+   */
+  computeSignature(xml: string, callback: ErrorFirstCallback<SignedXml>): void;
 
   /**
    * Compute the signature of the given XML (using the already defined settings).
@@ -641,7 +653,7 @@ export class SignedXml {
    * @returns If no callback is provided, returns `this` (the instance of SignedXml).
    * @throws TypeError If the xml can not be parsed, or Error if there were invalid options passed.
    */
-  computeSignature(xml: string, options: ComputeSignatureOptions): SignedXml;
+  computeSignature(xml: string, options: ErrorFirstCallback<SignedXml>): void;
 
   /**
    * Compute the signature of the given XML (using the already defined settings).
@@ -655,25 +667,21 @@ export class SignedXml {
   computeSignature(
     xml: string,
     options: ComputeSignatureOptions,
-    callback: ComputeSignatureCallback
+    callback: ErrorFirstCallback<SignedXml>
   ): void;
 
   computeSignature(
     xml: string,
-    options: ComputeSignatureOptions | ComputeSignatureCallback,
-    callbackParam?: ComputeSignatureCallback
-  ): unknown {
-    let callback: ComputeSignatureCallback | undefined;
+    options?: ComputeSignatureOptions | ErrorFirstCallback<SignedXml>,
+    callbackParam?: ErrorFirstCallback<SignedXml>
+  ): void {
+    let callback: ErrorFirstCallback<SignedXml>;
     if (typeof options === "function" && callbackParam == null) {
-      callback = options;
+      callback = options as ErrorFirstCallback<SignedXml>;
       options = {} as ComputeSignatureOptions;
     } else {
-      options = options as ComputeSignatureOptions;
-      callback = callbackParam;
-    }
-  
-    if (callback != null && typeof callback !== "function") {
-      throw new Error("Last parameter must be a callback function");
+      callback = callbackParam as ErrorFirstCallback<SignedXml>;
+      options = (options ?? {}) as ComputeSignatureOptions;
     }
 
     const doc = new Dom().parseFromString(xml);
@@ -790,18 +798,18 @@ export class SignedXml {
     }
     const signedInfoNode = signedInfoNodes[0];
 
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       const self = this;
       //Asynchronous flow
       this.calculateSignatureValue(doc, function (err, signature) {
         if (err) {
-          callback!(err);
+          callback(err);
         } else {
-          self.signatureValue = signature;
+          self.signatureValue = signature || "";
           signatureDoc.insertBefore(self.createSignature(prefix), signedInfoNode.nextSibling);
           self.signatureXml = signatureDoc.toString();
           self.signedXml = doc.toString();
-          callback!(null, self);
+          callback(null, self);
         }
       });
     } else {
@@ -910,14 +918,14 @@ export class SignedXml {
     return res;
   }
 
-  getCanonXml(transforms, node, options) {
+  getCanonXml(transforms: CanonicalizationAlgorithmType[], node, options) {
     options = options || {};
     options.defaultNsForPrefix = options.defaultNsForPrefix || SignedXml.defaultNsForPrefix;
     options.signatureNode = this.signatureNode;
 
     let canonXml = node.cloneNode(true); // Deep clone
 
-    Object.values(transforms).forEach((transformName) => {
+    transforms.forEach((transformName) => {
       const transform = this.findCanonicalizationAlgorithm(transformName);
       canonXml = transform.process(canonXml, options);
       //TODO: currently transform.process may return either Node or String value (enveloped transformation returns Node, exclusive-canonicalization returns String).

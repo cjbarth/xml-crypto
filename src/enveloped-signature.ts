@@ -2,7 +2,6 @@ const xpath = require("xpath");
 import {
   CanonicalizationOrTransformationAlgorithm,
   CanonicalizationOrTransformationAlgorithmProcessOptions,
-  CanonicalizationAlgorithmType,
   CanonicalizationOrTransformAlgorithmType,
 } from "./types";
 import { Utils } from "./utils";

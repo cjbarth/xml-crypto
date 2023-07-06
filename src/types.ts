@@ -91,11 +91,6 @@ export type ComputeSignatureOptions = {
 };
 
 /**
- * Callback signature for the {@link SignedXml#computeSignature} method.
- */
-export type ComputeSignatureCallback = (error: Error | null, signature?: SignedXml) => void;
-
-/**
  * Represents a reference node for XML digital signature.
  */
 export interface Reference {
@@ -106,7 +101,7 @@ export interface Reference {
   transforms?: ReadonlyArray<CanonicalizationOrTransformAlgorithmType>;
 
   // Optional. The algorithm used to calculate the digest value of the data.
-  digestAlgorithm?: HashAlgorithmType;
+  digestAlgorithm: HashAlgorithmType;
 
   // Optional. The URI that identifies the data to be signed.
   uri?: string;
@@ -138,30 +133,30 @@ export interface HashAlgorithm {
 }
 
 /** Extend this to create a new SignatureAlgorithm */
-export abstract class SignatureAlgorithm {
+export interface SignatureAlgorithm {
   /**
    * Sign the given string using the given key
    */
-  abstract getSignature(signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string;
-  abstract getSignature(
+  getSignature(signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string;
+  getSignature(
     signedInfo: crypto.BinaryLike,
     privateKey: crypto.KeyLike,
-    callback?: ErrorBackCallback<string>
+    callback?: ErrorFirstCallback<string>
   ): void;
   /**
    * Verify the given signature of the given string using key
    *
    * @param key a public cert, public key, or private key can be passed here
    */
-  abstract verifySignature(material: string, key: crypto.KeyLike, signatureValue: string): boolean;
-  abstract verifySignature(
+  verifySignature(material: string, key: crypto.KeyLike, signatureValue: string): boolean;
+  verifySignature(
     material: string,
     key: crypto.KeyLike,
     signatureValue: string,
-    callback?: ErrorBackCallback<boolean>
+    callback?: ErrorFirstCallback<boolean>
   ): void;
 
-  abstract getAlgorithmName(): SignatureAlgorithmType;
+  getAlgorithmName(): SignatureAlgorithmType;
 }
 
 /** Implement this to create a new TransformAlgorithm */
@@ -257,9 +252,7 @@ export declare module utils {
   export const BASE64_REGEX: RegExp;
 }
 
-export type ErrorBackCallback<T> = 
-    | ((err: Error) => void)
-    | ((err: null, result: T) => void);
+export type ErrorFirstCallback<T> = (err: Error | null, result?: T) => void;
 
 /**
  * This function will add a callback version of a sync function.
@@ -271,7 +264,7 @@ export function createOptionalCallbackFunction<T, A extends any[]>(
   syncVersion: (...args: A) => T
 ): {
   (...args: A): T;
-  (...args: [...A, ErrorBackCallback<T>]): void;
+  (...args: [...A, ErrorFirstCallback<T>]): void;
 } {
   return ((...args: any[]): any => {
     const lastArg = args[args.length - 1];
@@ -280,11 +273,10 @@ export function createOptionalCallbackFunction<T, A extends any[]>(
         const result = syncVersion(...(args.slice(0, -1) as A));
         (lastArg as (err: null, result: T) => void)(null, result);
       } catch (err) {
-        (lastArg as (err: Error) => void)(err instanceof Error ? err : new Error('Unknown error'));
+        (lastArg as (err: Error) => void)(err instanceof Error ? err : new Error("Unknown error"));
       }
     } else {
       return syncVersion(...(args as A));
     }
   }) as any;
 }
-

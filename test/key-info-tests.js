@@ -1,9 +1,9 @@
 const select = require("xpath").select;
 const xmldom = require("@xmldom/xmldom");
-const SignedXml = require("../lib/signed-xml.js").SignedXml;
+const SignedXml = require("../lib/signed-xml").SignedXml;
 const fs = require("fs");
 const xpath = require("xpath");
-const crypto = require("../index.js");
+const crypto = require("../lib/index");
 const expect = require("chai").expect;
 
 describe("KeyInfo tests", function () {

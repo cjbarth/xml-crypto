@@ -2,38 +2,32 @@ import * as crypto from "crypto";
 import { HashAlgorithm } from "./types";
 
 class Sha1 implements HashAlgorithm {
-  getHash: (xml: any) => string;
-  getAlgorithmName: () => string;
+  constructor() {}
+  getHash = function (xml) {
+    const shasum = crypto.createHash("sha1");
+    shasum.update(xml, "utf8");
+    const res = shasum.digest("base64");
+    return res;
+  };
 
-  constructor() {
-    this.getHash = function (xml) {
-      const shasum = crypto.createHash("sha1");
-      shasum.update(xml, "utf8");
-      const res = shasum.digest("base64");
-      return res;
-    };
-
-    this.getAlgorithmName = function () {
-      return "http://www.w3.org/2000/09/xmldsig#sha1";
-    };
-  }
+  getAlgorithmName = function () {
+    return "http://www.w3.org/2000/09/xmldsig#sha1";
+  };
 }
 
 class Sha256 implements HashAlgorithm {
-  getHash: (xml: any) => string;
-  getAlgorithmName: () => string;
-  constructor() {
-    this.getHash = function (xml) {
-      const shasum = crypto.createHash("sha256");
-      shasum.update(xml, "utf8");
-      const res = shasum.digest("base64");
-      return res;
-    };
+  constructor() {}
 
-    this.getAlgorithmName = function () {
-      return "http://www.w3.org/2001/04/xmlenc#sha256";
-    };
-  }
+  getHash = function (xml) {
+    const shasum = crypto.createHash("sha256");
+    shasum.update(xml, "utf8");
+    const res = shasum.digest("base64");
+    return res;
+  };
+
+  getAlgorithmName = function () {
+    return "http://www.w3.org/2001/04/xmlenc#sha256";
+  };
 }
 
 class Sha512 implements HashAlgorithm {
@@ -50,6 +44,9 @@ class Sha512 implements HashAlgorithm {
     this.getAlgorithmName = function () {
       return "http://www.w3.org/2001/04/xmlenc#sha512";
     };
+  }
+  ["constructor"](): void {
+    throw new Error("Method not implemented.");
   }
 }
 

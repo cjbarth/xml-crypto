@@ -1,6 +1,5 @@
-import { NamespacePrefix } from "./types";
-
-const utils = require("./utils");
+import { CanonicalizationOrTransformationAlgorithm, NamespacePrefix } from "./types";
+import { Utils } from "./utils";
 
 function isPrefixInScope(prefixesInScope, prefix, namespaceURI) {
   let ret = false;
@@ -13,10 +12,7 @@ function isPrefixInScope(prefixesInScope, prefix, namespaceURI) {
   return ret;
 }
 
-/**
- * @type { import(".").CanonicalizationOrTransformationAlgorithm}
- */
-class ExclusiveCanonicalization {
+class ExclusiveCanonicalization implements CanonicalizationOrTransformationAlgorithm {
   includeComments: boolean = false;
 
   constructor() {}
@@ -74,7 +70,7 @@ class ExclusiveCanonicalization {
     attrListToRender.sort(this.attrCompare);
 
     for (attr of attrListToRender) {
-      res.push(" ", attr.name, '="', utils.encodeSpecialCharactersInAttribute(attr.value), '"');
+      res.push(" ", attr.name, '="', Utils.encodeSpecialCharactersInAttribute(attr.value), '"');
     }
 
     return res.join("");
@@ -173,7 +169,7 @@ class ExclusiveCanonicalization {
       return this.renderComment(node);
     }
     if (node.data) {
-      return utils.encodeSpecialCharactersInText(node.data);
+      return Utils.encodeSpecialCharactersInText(node.data);
     }
 
     let i;
@@ -240,7 +236,7 @@ class ExclusiveCanonicalization {
     return (
       (isAfterDocument ? "\n" : "") +
       "<!--" +
-      utils.encodeSpecialCharactersInText(node.data) +
+      Utils.encodeSpecialCharactersInText(node.data) +
       "-->" +
       (isBeforeDocument ? "\n" : "")
     );
@@ -268,16 +264,16 @@ class ExclusiveCanonicalization {
      * If the inclusiveNamespacesPrefixList has not been explicitly provided then look it up in CanonicalizationMethod/InclusiveNamespaces
      */
     if (inclusiveNamespacesPrefixList.length === 0) {
-      const CanonicalizationMethod = utils.findChilds(node, "CanonicalizationMethod");
+      const CanonicalizationMethod = Utils.findChilds(node, "CanonicalizationMethod");
       if (CanonicalizationMethod.length !== 0) {
-        const inclusiveNamespaces = utils.findChilds(
+        const inclusiveNamespaces = Utils.findChilds(
           CanonicalizationMethod[0],
           "InclusiveNamespaces"
         );
         if (inclusiveNamespaces.length !== 0) {
-          inclusiveNamespacesPrefixList = inclusiveNamespaces[0]
-            .getAttribute("PrefixList")
-            .split(" ");
+          inclusiveNamespacesPrefixList = (
+            inclusiveNamespaces[0].getAttribute("PrefixList") || ""
+          ).split(" ");
         }
       }
     }
@@ -320,10 +316,6 @@ class ExclusiveCanonicalization {
   }
 }
 
-/**
- * Add c14n#WithComments here (very simple subclass)
- * @type { import(".").CanonicalizationOrTransformationAlgorithm}
- */
 class ExclusiveCanonicalizationWithComments extends ExclusiveCanonicalization {
   constructor() {
     super();

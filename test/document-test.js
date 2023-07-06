@@ -1,4 +1,4 @@
-const crypto = require("../index");
+const crypto = require("../lib/index");
 const xpath = require("xpath");
 const xmldom = require("@xmldom/xmldom");
 const fs = require("fs");

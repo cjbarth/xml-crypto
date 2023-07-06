@@ -35,6 +35,7 @@
     "prettier-format": "prettier --config .prettierrc.json --write .",
     "prerelease": "git clean -xfd && npm ci && npm test",
     "release": "release-it",
+    "pretest": "npm run build",
     "test": "nyc mocha"
   },
   "dependencies": {
