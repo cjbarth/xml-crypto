@@ -375,6 +375,7 @@ describe("Signature unit tests", function () {
       return "dummy key info";
     };
     sig.canonicalizationAlgorithm = "http://DummyCanonicalization";
+    sig.privateKey = "";
 
     sig.addReference(
       "//*[local-name(.)='x']",
@@ -529,6 +530,7 @@ describe("Signature unit tests", function () {
       return "<ds:dummy>dummy key info</ds:dummy>";
     };
     sig.canonicalizationAlgorithm = "http://DummyCanonicalization";
+    sig.privateKey = "";
 
     sig.addReference(
       "//*[local-name(.)='x']",
