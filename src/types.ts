@@ -204,31 +204,39 @@ export interface TransformAlgorithm {
  *  - {@link SignedXml#validationErrors}
  */
 
+
+function isErrorFirstCallback<T>(possibleCallback: unknown): possibleCallback is ErrorFirstCallback<T> {
+  return typeof possibleCallback === "function"
+}
+
 /**
  * This function will add a callback version of a sync function.
  *
  * This follows the factory pattern.
  * Just call this function, passing the function that you'd like to add a callback version of.
  */
-export function createOptionalCallbackFunction<T, A extends any[]>(
+export function createOptionalCallbackFunction<T, A extends unknown[]>(
   syncVersion: (...args: A) => T
 ): {
   (...args: A): T;
   (...args: [...A, ErrorFirstCallback<T>]): void;
 } {
-  return ((...args: any[]): any => {
-    const lastArg = args[args.length - 1];
-    if (typeof lastArg === "function") {
+  return ((...args: A | [...A, ErrorFirstCallback<T>]) => {
+    const possibleCallback = args[args.length - 1];
+    if (isErrorFirstCallback(possibleCallback)) {
       try {
         const result = syncVersion(...(args.slice(0, -1) as A));
-        (lastArg as (err: null, result: T) => void)(null, result);
+        possibleCallback(null, result);
       } catch (err) {
-        (lastArg as (err: Error) => void)(err instanceof Error ? err : new Error("Unknown error"));
+        possibleCallback(err instanceof Error ? err : new Error("Unknown error"));
       }
     } else {
       return syncVersion(...(args as A));
     }
-  }) as any;
+  }) as {
+    (...args: A): T;
+    (...args: [...A, ErrorFirstCallback<T>]): void;
+  };
 }
 
 declare global {
