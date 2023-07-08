@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.8.8",
-    "xpath": "0.0.32"
+    "xpath": "git+https://github.com/goto100/xpath.git#pull/116/head"
   },
   "devDependencies": {
     "@cjbarth/github-release-notes": "^4.0.0",

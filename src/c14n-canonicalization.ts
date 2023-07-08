@@ -1,5 +1,5 @@
 import { CanonicalizationOrTransformationAlgorithm, ProcessOptions } from "./types";
-import { Utils } from "./utils";
+import * as utils from "./utils";
 
 export class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm {
   includeComments: boolean = false;
@@ -58,7 +58,7 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
     attrListToRender.sort(this.attrCompare);
 
     const res = attrListToRender.map((attr) => {
-      return ` ${attr.name}="${Utils.encodeSpecialCharactersInAttribute(attr.value)}"`;
+      return ` ${attr.name}="${utils.encodeSpecialCharactersInAttribute(attr.value)}"`;
     });
 
     return res.join("");
@@ -157,7 +157,7 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
       return this.renderComment(node);
     }
     if (node.data) {
-      return Utils.encodeSpecialCharactersInText(node.data);
+      return utils.encodeSpecialCharactersInText(node.data);
     }
 
     let i;
@@ -218,7 +218,7 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
     return (
       (isAfterDocument ? "\n" : "") +
       "<!--" +
-      Utils.encodeSpecialCharactersInText(node.data) +
+      utils.encodeSpecialCharactersInText(node.data) +
       "-->" +
       (isBeforeDocument ? "\n" : "")
     );

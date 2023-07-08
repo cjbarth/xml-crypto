@@ -16,7 +16,7 @@ import {
 const xpath = require("xpath");
 const xmldom = require("@xmldom/xmldom");
 const Dom = require("@xmldom/xmldom").DOMParser;
-import { Utils } from "./utils";
+import * as utils from "./utils";
 const c14n = require("./c14n-canonicalization");
 const execC14n = require("./exclusive-canonicalization");
 const envelopedSignatures = require("./enveloped-signature");
@@ -186,12 +186,12 @@ export class SignedXml {
 
     let publicCertMatches: string[] = [];
     if (typeof publicCert === "string") {
-      publicCertMatches = publicCert.match(Utils.EXTRACT_X509_CERTS) || [];
+      publicCertMatches = publicCert.match(utils.EXTRACT_X509_CERTS) || [];
     }
 
     if (publicCertMatches.length > 0) {
       x509Certs = publicCertMatches
-        .map((c) => `<X509Certificate>${Utils.pemToDer(c)}</X509Certificate>`)
+        .map((c) => `<X509Certificate>${utils.pemToDer(c)}</X509Certificate>`)
         .join("");
     }
 
@@ -209,7 +209,7 @@ export class SignedXml {
     if (keyInfo != null && keyInfo.length > 0) {
       const certs = xpath.select(".//*[local-name(.)='X509Certificate']", keyInfo[0]);
       if (certs.length > 0) {
-        return Utils.derToPem(certs[0].textContent.trim(), "CERTIFICATE");
+        return utils.derToPem(certs[0].textContent.trim(), "CERTIFICATE");
       }
     }
 
@@ -280,7 +280,7 @@ export class SignedXml {
       throw new Error("No signature found.");
     }
 
-    const signedInfo = Utils.findChilds(this.signatureNode, "SignedInfo");
+    const signedInfo = utils.findChilds(this.signatureNode, "SignedInfo");
     if (signedInfo.length === 0) {
       throw new Error("could not find SignedInfo element in the message");
     }
@@ -300,7 +300,7 @@ export class SignedXml {
     /**
      * Search for ancestor namespaces before canonicalization.
      */
-    const ancestorNamespaces = Utils.findAncestorNs(doc, "//*[local-name()='SignedInfo']");
+    const ancestorNamespaces = utils.findAncestorNs(doc, "//*[local-name()='SignedInfo']");
 
     const c14nOptions = {
       ancestorNamespaces: ancestorNamespaces,
@@ -313,7 +313,7 @@ export class SignedXml {
      * Search for ancestor namespaces before canonicalization.
      */
     if (Array.isArray(ref.transforms)) {
-      ref.ancestorNamespaces = Utils.findAncestorNs(doc, ref.xpath, this.namespaceResolver);
+      ref.ancestorNamespaces = utils.findAncestorNs(doc, ref.xpath, this.namespaceResolver);
     }
 
     const c14nOptions = {
@@ -433,7 +433,7 @@ export class SignedXml {
       const hash = this.findHashAlgorithm(ref.digestAlgorithm);
       const digest = hash.getHash(canonXml);
 
-      if (!Utils.validateDigestValue(digest, ref.digestValue)) {
+      if (!utils.validateDigestValue(digest, ref.digestValue)) {
         this.validationErrors.push(
           "invalid signature: for uri " +
             ref.uri +
@@ -502,19 +502,19 @@ export class SignedXml {
    *
    */
   loadReference(ref) {
-    let nodes = Utils.findChilds(ref, "DigestMethod");
+    let nodes = utils.findChilds(ref, "DigestMethod");
     if (nodes.length === 0) {
       throw new Error("could not find DigestMethod in reference " + ref.toString());
     }
     const digestAlgoNode = nodes[0];
 
-    const attr = Utils.findAttr(digestAlgoNode, "Algorithm");
+    const attr = utils.findAttr(digestAlgoNode, "Algorithm");
     if (!attr) {
       throw new Error("could not find Algorithm attribute in node " + digestAlgoNode.toString());
     }
     const digestAlgo = attr.value;
 
-    nodes = Utils.findChilds(ref, "DigestValue");
+    nodes = utils.findChilds(ref, "DigestValue");
     if (nodes.length === 0) {
       throw new Error("could not find DigestValue node in reference " + ref.toString());
     }
@@ -527,12 +527,12 @@ export class SignedXml {
     const transforms: string[] = [];
     let trans;
     let inclusiveNamespacesPrefixList;
-    nodes = Utils.findChilds(ref, "Transforms");
+    nodes = utils.findChilds(ref, "Transforms");
     if (nodes.length !== 0) {
       const transformsNode = nodes[0];
-      const transformsAll = Utils.findChilds(transformsNode, "Transform");
+      const transformsAll = utils.findChilds(transformsNode, "Transform");
       for (const transform of transformsAll) {
-        const transformAttr = Utils.findAttr(transform, "Algorithm");
+        const transformAttr = utils.findAttr(transform, "Algorithm");
 
         if (transformAttr) {
           transforms.push(transformAttr.value);
@@ -540,7 +540,7 @@ export class SignedXml {
       }
 
       // This is a little strange, we are looking for children of the last child of `transformsNode`
-      const inclusiveNamespaces = Utils.findChilds(
+      const inclusiveNamespaces = utils.findChilds(
         transformsAll[transformsAll.length - 1],
         "InclusiveNamespaces"
       );
@@ -587,7 +587,7 @@ export class SignedXml {
       null,
       transforms,
       digestAlgo,
-      Utils.findAttr(ref, "URI")?.value,
+      utils.findAttr(ref, "URI")?.value,
       digestValue,
       inclusiveNamespacesPrefixList,
       false
@@ -786,7 +786,7 @@ export class SignedXml {
     }
 
     this.signatureNode = signatureDoc;
-    let signedInfoNodes = Utils.findChilds(this.signatureNode, "SignedInfo");
+    let signedInfoNodes = utils.findChilds(this.signatureNode, "SignedInfo");
     if (signedInfoNodes.length === 0) {
       const err3 = new Error("could not find SignedInfo element in the message");
       if (!callback) {
@@ -948,14 +948,14 @@ export class SignedXml {
     let attr;
 
     if (this.idMode === "wssecurity") {
-      attr = Utils.findAttr(
+      attr = utils.findAttr(
         node,
         "Id",
         "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
       );
     } else {
       this.idAttributes.some((idAttribute) => {
-        attr = Utils.findAttr(node, idAttribute);
+        attr = utils.findAttr(node, idAttribute);
         return !!attr; // This will break the loop as soon as a truthy attr is found.
       });
     }

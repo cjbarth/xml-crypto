@@ -4,8 +4,7 @@ import {
   CanonicalizationOrTransformationAlgorithmProcessOptions,
   CanonicalizationOrTransformAlgorithmType,
 } from "./types";
-import { Utils } from "./utils";
-
+import * as utils from "./utils";
 export class EnvelopedSignature implements CanonicalizationOrTransformationAlgorithm {
   includeComments: boolean = false;
   process(node: Node, options: CanonicalizationOrTransformationAlgorithmProcessOptions) {

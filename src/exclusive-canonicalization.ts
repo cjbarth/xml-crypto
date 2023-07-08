@@ -1,5 +1,5 @@
 import { CanonicalizationOrTransformationAlgorithm, NamespacePrefix } from "./types";
-import { Utils } from "./utils";
+import * as utils from "./utils";
 
 function isPrefixInScope(prefixesInScope, prefix, namespaceURI) {
   let ret = false;
@@ -70,7 +70,7 @@ export class ExclusiveCanonicalization implements CanonicalizationOrTransformati
     attrListToRender.sort(this.attrCompare);
 
     for (attr of attrListToRender) {
-      res.push(" ", attr.name, '="', Utils.encodeSpecialCharactersInAttribute(attr.value), '"');
+      res.push(" ", attr.name, '="', utils.encodeSpecialCharactersInAttribute(attr.value), '"');
     }
 
     return res.join("");
@@ -169,7 +169,7 @@ export class ExclusiveCanonicalization implements CanonicalizationOrTransformati
       return this.renderComment(node);
     }
     if (node.data) {
-      return Utils.encodeSpecialCharactersInText(node.data);
+      return utils.encodeSpecialCharactersInText(node.data);
     }
 
     let i;
@@ -236,7 +236,7 @@ export class ExclusiveCanonicalization implements CanonicalizationOrTransformati
     return (
       (isAfterDocument ? "\n" : "") +
       "<!--" +
-      Utils.encodeSpecialCharactersInText(node.data) +
+      utils.encodeSpecialCharactersInText(node.data) +
       "-->" +
       (isBeforeDocument ? "\n" : "")
     );
@@ -264,9 +264,9 @@ export class ExclusiveCanonicalization implements CanonicalizationOrTransformati
      * If the inclusiveNamespacesPrefixList has not been explicitly provided then look it up in CanonicalizationMethod/InclusiveNamespaces
      */
     if (inclusiveNamespacesPrefixList.length === 0) {
-      const CanonicalizationMethod = Utils.findChilds(node, "CanonicalizationMethod");
+      const CanonicalizationMethod = utils.findChilds(node, "CanonicalizationMethod");
       if (CanonicalizationMethod.length !== 0) {
-        const inclusiveNamespaces = Utils.findChilds(
+        const inclusiveNamespaces = utils.findChilds(
           CanonicalizationMethod[0],
           "InclusiveNamespaces"
         );

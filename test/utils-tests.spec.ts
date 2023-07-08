@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { Utils } from "../src/utils";
+import * as utils from "../src/utils";
 import { expect } from "chai";
 
 describe("Utils tests", function () {
@@ -12,7 +12,7 @@ describe("Utils tests", function () {
         pemAsArray[0] + "\n" + base64String + "\n" + pemAsArray[pemAsArray.length - 1];
 
       // @ts-expect-error FIXME
-      expect(Utils.derToPem(nonNormalizedPem)).to.equal(normalizedPem);
+      expect(utils.derToPem(nonNormalizedPem)).to.equal(normalizedPem);
     });
 
     it("will return a normalized PEM format when given a base64 string", function () {
@@ -20,12 +20,12 @@ describe("Utils tests", function () {
       const pemAsArray = normalizedPem.trim().split("\n");
       const base64String = pemAsArray.slice(1, -1).join("");
 
-      expect(Utils.derToPem(base64String, "CERTIFICATE")).to.equal(normalizedPem);
+      expect(utils.derToPem(base64String, "CERTIFICATE")).to.equal(normalizedPem);
     });
 
     it("will throw if the format is neither PEM nor DER", function () {
       // @ts-expect-error FIXME
-      expect(() => Utils.derToPem("not a pem")).to.throw();
+      expect(() => utils.derToPem("not a pem")).to.throw();
     });
   });
 });

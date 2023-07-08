@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { C14nCanonicalization } from "../src/c14n-canonicalization";
 import { DOMParser as Dom } from "@xmldom/xmldom";
 import { select } from "xpath";
-import { Utils } from "../src/utils";
+import * as utils from "../src/utils";
 
 const test_C14nCanonicalization = function (xml, xpath, expected) {
   const doc = new Dom().parseFromString(xml);
@@ -12,7 +12,7 @@ const test_C14nCanonicalization = function (xml, xpath, expected) {
   const can = new C14nCanonicalization();
   const result = can
     .process(elem, {
-      ancestorNamespaces: Utils.findAncestorNs(doc, xpath),
+      ancestorNamespaces: utils.findAncestorNs(doc, xpath),
     })
     .toString();
 
@@ -21,7 +21,7 @@ const test_C14nCanonicalization = function (xml, xpath, expected) {
 
 const test_findAncestorNs = function (xml, xpath, expected) {
   const doc = new Dom().parseFromString(xml);
-  const result = Utils.findAncestorNs(doc, xpath);
+  const result = utils.findAncestorNs(doc, xpath);
 
   expect(result).to.deep.equal(expected);
 };
