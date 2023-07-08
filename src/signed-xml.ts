@@ -13,15 +13,14 @@ import {
   ErrorFirstCallback,
 } from "./types";
 
-const xpath = require("xpath");
-const xmldom = require("@xmldom/xmldom");
-const Dom = require("@xmldom/xmldom").DOMParser;
+import * as xpath from "xpath";
+import { DOMParser as Dom } from "@xmldom/xmldom";
 import * as utils from "./utils";
-const c14n = require("./c14n-canonicalization");
-const execC14n = require("./exclusive-canonicalization");
-const envelopedSignatures = require("./enveloped-signature");
-const hashAlgorithms = require("./hash-algorithms");
-const signatureAlgorithms = require("./signature-algorithms");
+import * as c14n from "./c14n-canonicalization";
+import * as execC14n from "./exclusive-canonicalization";
+import * as envelopedSignatures from "./enveloped-signature";
+import * as hashAlgorithms from "./hash-algorithms";
+import * as signatureAlgorithms from "./signature-algorithms";
 import * as crypto from "crypto";
 
 export class SignedXml {
@@ -44,7 +43,7 @@ export class SignedXml {
   /**
    * It specifies a list of namespace prefixes that should be considered "inclusive" during the canonicalization process.
    */
-  inclusiveNamespacesPrefixList: string = "";
+  inclusiveNamespacesPrefixList = "";
   namespaceResolver: XPathNSResolver = {
     lookupNamespaceURI: function (prefix) {
       throw new Error("Not implemented");
@@ -786,7 +785,7 @@ export class SignedXml {
     }
 
     this.signatureNode = signatureDoc;
-    let signedInfoNodes = utils.findChilds(this.signatureNode, "SignedInfo");
+    const signedInfoNodes = utils.findChilds(this.signatureNode, "SignedInfo");
     if (signedInfoNodes.length === 0) {
       const err3 = new Error("could not find SignedInfo element in the message");
       if (!callback) {

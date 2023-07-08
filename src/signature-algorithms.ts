@@ -2,8 +2,6 @@ import * as crypto from "crypto";
 import { SignatureAlgorithm, createOptionalCallbackFunction } from "./types";
 
 export class RsaSha1 implements SignatureAlgorithm {
-  constructor() {}
-
   getSignature = createOptionalCallbackFunction(
     (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string => {
       const signer = crypto.createSign("RSA-SHA1");
@@ -30,7 +28,6 @@ export class RsaSha1 implements SignatureAlgorithm {
 }
 
 export class RsaSha256 implements SignatureAlgorithm {
-  constructor() {}
   getSignature = createOptionalCallbackFunction(
     (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string => {
       const signer = crypto.createSign("RSA-SHA256");
@@ -57,7 +54,6 @@ export class RsaSha256 implements SignatureAlgorithm {
 }
 
 export class RsaSha512 implements SignatureAlgorithm {
-  constructor() {}
   getSignature = createOptionalCallbackFunction(
     (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string => {
       const signer = crypto.createSign("RSA-SHA512");
@@ -84,7 +80,6 @@ export class RsaSha512 implements SignatureAlgorithm {
 }
 
 export class HmacSha1 implements SignatureAlgorithm {
-  constructor() {}
   getSignature = createOptionalCallbackFunction(
     (signedInfo: crypto.BinaryLike, privateKey: crypto.KeyLike): string => {
       const signer = crypto.createHmac("SHA1", privateKey);

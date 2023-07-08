@@ -265,15 +265,15 @@ export function validateDigestValue(digest, expectedDigest) {
   let buffer;
   let expectedBuffer;
 
-  const majorVersion = /^v(\d+)/.exec(process.version)![1];
+  const majorVersion = (/^v(\d+)/.exec(process.version) || [0, 0])[1];
 
   if (+majorVersion >= 6) {
     buffer = Buffer.from(digest, "base64");
     expectedBuffer = Buffer.from(expectedDigest, "base64");
   } else {
     // Compatibility with Node < 5.10.0
-    buffer = new Buffer(digest, "base64");
-    expectedBuffer = new Buffer(expectedDigest, "base64");
+    buffer = Buffer.from(digest, "base64");
+    expectedBuffer = Buffer.from(expectedDigest, "base64");
   }
 
   if (typeof buffer.equals === "function") {

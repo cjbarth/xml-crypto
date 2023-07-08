@@ -1,10 +1,13 @@
-import { CanonicalizationOrTransformationAlgorithm, ProcessOptions } from "./types";
+import {
+  CanonicalizationOrTransformationAlgorithm,
+  NamespacePrefix,
+  ProcessOptions,
+  RenderedNamespace,
+} from "./types";
 import * as utils from "./utils";
 
 export class C14nCanonicalization implements CanonicalizationOrTransformationAlgorithm {
-  includeComments: boolean = false;
-
-  constructor() {}
+  includeComments = false;
 
   attrCompare(a, b) {
     if (!a.namespaceURI && b.namespaceURI) {
@@ -67,16 +70,21 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
   /**
    * Create the string of all namespace declarations that should appear on this element
    *
-   * @param {Node} node. The node we now render
-   * @param {Array} prefixesInScope. The prefixes defined on this node
+   * @param node. The node we now render
+   * @param prefixesInScope. The prefixes defined on this node
    *                parents which are a part of the output set
-   * @param {String} defaultNs. The current default namespace
-   * @param {String} defaultNsForPrefix.
-   * @param {String} ancestorNamespaces - Import ancestor namespaces if it is specified
-   * @return {String}
+   * @param defaultNs. The current default namespace
+   * @param  defaultNsForPrefix.
+   * @param ancestorNamespaces - Import ancestor namespaces if it is specified
    * @api private
    */
-  renderNs(node, prefixesInScope, defaultNs, defaultNsForPrefix, ancestorNamespaces) {
+  renderNs(
+    node: Element,
+    prefixesInScope: string[],
+    defaultNs: string,
+    defaultNsForPrefix: string,
+    ancestorNamespaces: NamespacePrefix[]
+  ): RenderedNamespace {
     let i;
     let attr;
     const res: string[] = [];
@@ -95,7 +103,7 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
       }
     } else if (defaultNs !== currNs) {
       //new default ns
-      newDefaultNs = node.namespaceURI;
+      newDefaultNs = node.namespaceURI || "";
       res.push(' xmlns="', newDefaultNs, '"');
     }
 
@@ -149,7 +157,7 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
     //render namespaces
     res.push(...nsListToRender.map((attr) => ` xmlns:${attr.prefix}="${attr.namespaceURI}"`));
 
-    return { rendered: res.join(""), newDefaultNs: newDefaultNs };
+    return { rendered: res.join(""), newDefaultNs };
   }
 
   processInner(node, prefixesInScope, defaultNs, defaultNsForPrefix, ancestorNamespaces) {

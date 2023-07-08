@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Type definitions for @node-saml/xml-crypto
 // Project: https://github.com/node-saml/xml-crypto#readme
 // Original definitions by: Eric Heikes <https://github.com/eheikes>
@@ -6,6 +7,8 @@
 /// <reference types="node" />
 
 import * as crypto from "crypto";
+
+export type ErrorFirstCallback<T> = (err: Error | null, result?: T) => void;
 
 export type CanonicalizationAlgorithmType =
   | "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
@@ -32,6 +35,15 @@ export type SignatureAlgorithmType =
   | string;
 
 /**
+ * @param cert the certificate as a string or array of strings (see https://www.w3.org/TR/2008/REC-xmldsig-core-20080610/#sec-X509Data)
+ * @param prefix an optional namespace alias to be used for the generated XML
+ */
+export type GetKeyInfoContentArgs = {
+  publicCert?: crypto.KeyLike;
+  prefix?: string | null;
+};
+
+/**
  * Options for the SignedXml constructor.
  */
 export type SignedXmlOptions = {
@@ -52,15 +64,21 @@ export type NamespacePrefix = {
   prefix: string;
   namespaceURI: string;
 };
+
 export type ProcessOptions = {
   defaultNs?: string;
   defaultNsForPrefix?: NamespacePrefix;
   ancestorNamespaces?: NamespacePrefix[];
 };
 
+export type RenderedNamespace = {
+  rendered: string;
+  newDefaultNs: string;
+};
+
 export type CanonicalizationOrTransformationAlgorithmProcessOptions = {
   defaultNs?: string;
-  defaultForPrefix?: {};
+  defaultForPrefix?: object;
   ancestorNamespaces?: [];
   signatureNode: Node;
 };
@@ -187,17 +205,6 @@ export interface TransformAlgorithm {
  */
 
 /**
- * @param cert the certificate as a string or array of strings (see https://www.w3.org/TR/2008/REC-xmldsig-core-20080610/#sec-X509Data)
- * @param prefix an optional namespace alias to be used for the generated XML
- */
-export type GetKeyInfoContentArgs = {
-  publicCert?: crypto.KeyLike;
-  prefix?: string | null;
-};
-
-export type ErrorFirstCallback<T> = (err: Error | null, result?: T) => void;
-
-/**
  * This function will add a callback version of a sync function.
  *
  * This follows the factory pattern.
@@ -222,4 +229,10 @@ export function createOptionalCallbackFunction<T, A extends any[]>(
       return syncVersion(...(args as A));
     }
   }) as any;
+}
+
+declare global {
+  interface ArrayConstructor {
+    isArray(arg: unknown): arg is Array<unknown> | ReadonlyArray<unknown>;
+  }
 }
