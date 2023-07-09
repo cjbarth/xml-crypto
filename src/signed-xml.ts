@@ -204,11 +204,12 @@ export class SignedXml {
    * @param keyInfo an array with exactly one KeyInfo element (see https://www.w3.org/TR/2008/REC-xmldsig-core-20080610/#sec-X509Data)
    * @return the signing certificate as a string in PEM format
    */
-  static getCertFromKeyInfo(keyInfo?: string | null): string | null {
+  static getCertFromKeyInfo(keyInfo?: Node[] | null): string | null {
     if (keyInfo != null && keyInfo.length > 0) {
       const certs = xpath.select(".//*[local-name(.)='X509Certificate']", keyInfo[0]);
-      if (certs.length > 0) {
-        return utils.derToPem(certs[0].textContent.trim(), "CERTIFICATE");
+      const firstCert = certs?.[0];
+      if (xpath.isNodeLike(firstCert)) {
+        return utils.derToPem(firstCert.textContent || "", "CERTIFICATE");
       }
     }
 
@@ -389,7 +390,7 @@ export class SignedXml {
     for (const ref of this.references) {
       let elemXpath;
       const uri = ref.uri?.[0] === "#" ? ref.uri.substring(1) : ref.uri;
-      let elem = [];
+      let elem: xpath.SelectReturnType = [];
 
       if (uri === "") {
         elem = xpath.select("//*", doc);
@@ -401,8 +402,8 @@ export class SignedXml {
         for (const attr of this.idAttributes) {
           const tmp_elemXpath = `//*[@*[local-name(.)='${attr}']='${uri}']`;
           const tmp_elem = xpath.select(tmp_elemXpath, doc);
-          num_elements_for_id += tmp_elem.length;
-          if (tmp_elem.length > 0) {
+          if (Array.isArray(tmp_elem) && tmp_elem.length > 0) {
+            num_elements_for_id += tmp_elem.length;
             elem = tmp_elem;
             elemXpath = tmp_elemXpath;
           }
@@ -418,7 +419,8 @@ export class SignedXml {
         ref.xpath = elemXpath;
       }
 
-      if (elem.length === 0) {
+      // Note, we are using the last found element from the loop above
+      if (!Array.isArray(elem) || (Array.isArray(elem) && elem.length === 0)) {
         this.validationErrors.push(
           "invalid signature: the signature references an element with uri " +
             ref.uri +
@@ -466,22 +468,29 @@ export class SignedXml {
       ".//*[local-name(.)='CanonicalizationMethod']/@Algorithm",
       signatureNode
     );
-    if (nodes.length === 0) {
+    if (!Array.isArray(nodes) || (Array.isArray(nodes) && nodes.length === 0)) {
       throw new Error("could not find CanonicalizationMethod/@Algorithm element");
     }
-    this.canonicalizationAlgorithm = nodes[0].value;
 
-    this.signatureAlgorithm = xpath.select1(
+    if (xpath.isAttribute(nodes[0])) {
+      this.canonicalizationAlgorithm = nodes[0].value as CanonicalizationAlgorithmType;
+    }
+
+    const signatureAlgorithm = xpath.select1(
       ".//*[local-name(.)='SignatureMethod']/@Algorithm",
       signatureNode
-    ).value;
+    );
+
+    if (xpath.isAttribute(signatureAlgorithm)) {
+      this.signatureAlgorithm = signatureAlgorithm.value as SignatureAlgorithmType;
+    }
 
     this.references = [];
     const references = xpath.select(
       ".//*[local-name(.)='SignedInfo']/*[local-name(.)='Reference']",
       signatureNode
     );
-    if (references.length === 0) {
+    if (!Array.isArray(references) || (Array.isArray(references) && references.length === 0)) {
       throw new Error("could not find any Reference elements");
     }
 
@@ -489,9 +498,19 @@ export class SignedXml {
       this.loadReference(reference);
     }
 
-    this.signatureValue = xpath
-      .select1(".//*[local-name(.)='SignatureValue']/text()", signatureNode)
-      .data.replace(/\r?\n/g, "");
+    const signatureValue = xpath.select1(
+      ".//*[local-name(.)='SignatureValue']/text()",
+      signatureNode
+    );
+
+    if (xpath.isTextNode(signatureValue)) {
+      this.signatureValue = signatureValue.data.replace(/\r?\n/g, "");
+    }
+
+    const keyInfo = xpath.select(".//*[local-name(.)='KeyInfo']", signatureNode);
+
+    // TODO: should this just be a single return instead of an array that we always take the first entry of?
+    if (keyInfo != null) {
 
     this.keyInfo = xpath.select(".//*[local-name(.)='KeyInfo']", signatureNode);
   }

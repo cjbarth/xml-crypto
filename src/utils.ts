@@ -145,7 +145,7 @@ export function pemToDer(pem: string): string {
  * @param pemLabel The label of the header and footer to add
  */
 export function derToPem(
-  der: string,
+  der: string | Buffer,
   pemLabel: "CERTIFICATE" | "PRIVATE KEY" | "RSA PUBLIC KEY"
 ): string {
   const base64Der = Buffer.isBuffer(der) ? der.toString("latin1").trim() : der.trim();

@@ -57,7 +57,7 @@ export type SignedXmlOptions = {
   implicitTransforms?: ReadonlyArray<CanonicalizationOrTransformAlgorithmType>;
   keyInfoAttributes?: Record<string, string>;
   getKeyInfoContent?(args?: GetKeyInfoContentArgs): string | null;
-  getCertFromKeyInfo?(keyInfo: string): string | null;
+  getCertFromKeyInfo?(keyInfo: Node[]): string | null;
 };
 
 export type NamespacePrefix = {
@@ -204,9 +204,10 @@ export interface TransformAlgorithm {
  *  - {@link SignedXml#validationErrors}
  */
 
-
-function isErrorFirstCallback<T>(possibleCallback: unknown): possibleCallback is ErrorFirstCallback<T> {
-  return typeof possibleCallback === "function"
+function isErrorFirstCallback<T>(
+  possibleCallback: unknown
+): possibleCallback is ErrorFirstCallback<T> {
+  return typeof possibleCallback === "function";
 }
 
 /**
