@@ -155,7 +155,14 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
     nsListToRender.sort(this.nsCompare);
 
     //render namespaces
-    res.push(...nsListToRender.map((attr) => ` xmlns:${attr.prefix}="${attr.namespaceURI}"`));
+    res.push(
+        ...nsListToRender.map((attr) => {
+          if (attr.prefix) {
+            return ` xmlns:${attr.prefix}="${attr.namespaceURI}"`;
+          }
+          return ` xmlns="${attr.namespaceURI}"`;
+        })
+    );
 
     return { rendered: res.join(""), newDefaultNs };
   }
