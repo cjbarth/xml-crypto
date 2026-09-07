@@ -244,4 +244,22 @@ describe("C14N non-exclusive canonicalization tests", function () {
 
     test_C14nCanonicalization(xml, xpath, expected);
   });
+
+  it("C14n: Renders the apex's redeclaration of an ancestor prefix, not the ancestor binding", function () {
+    const xml =
+      '<root xmlns:q="urn:old"><x xmlns:p="urn:p" xmlns:q="urn:new"><q:y></q:y></x></root>';
+    const xpath = "//*[local-name()='x']";
+    const expected = '<x xmlns:p="urn:p" xmlns:q="urn:new"><q:y></q:y></x>';
+
+    test_C14nCanonicalization(xml, xpath, expected);
+  });
+
+  it("C14n: Renders the apex's redeclaration of the prefix in its own name", function () {
+    const xml =
+      '<root xmlns:q="urn:old"><q:x xmlns:p="urn:p" xmlns:q="urn:new"><y></y></q:x></root>';
+    const xpath = "//*[local-name()='x']";
+    const expected = '<q:x xmlns:p="urn:p" xmlns:q="urn:new"><y></y></q:x>';
+
+    test_C14nCanonicalization(xml, xpath, expected);
+  });
 });

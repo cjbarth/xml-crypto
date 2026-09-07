@@ -142,6 +142,7 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
       for (const ancestorNamespace of ancestorNamespaces) {
         if (!nsListToRender.some((ns) => ns.prefix === ancestorNamespace.prefix)) {
           nsListToRender.push(ancestorNamespace);
+          prefixesInScope.push(ancestorNamespace.prefix);
         }
       }
     }
@@ -258,10 +259,9 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
     const defaultNsForPrefix = options.defaultNsForPrefix || {};
     const ancestorNamespaces = options.ancestorNamespaces || [];
 
+    // Ancestor namespaces enter scope where they are rendered, in `renderNs`. Seeding them
+    // here would suppress the apex's own declaration of the same prefix.
     const prefixesInScope: string[] = [];
-    for (let i = 0; i < ancestorNamespaces.length; i++) {
-      prefixesInScope.push(ancestorNamespaces[i].prefix);
-    }
 
     const res = this.processInner(
       node,
