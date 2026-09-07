@@ -228,4 +228,20 @@ describe("C14N non-exclusive canonicalization tests", function () {
 
     test_C14nCanonicalization(xml, xpath, expected);
   });
+
+  it("C14n: Renders the hoisted ancestor default namespace once when the apex inherits it", function () {
+    const xml = '<root xmlns="urn:A"><x xmlns:p="urn:p"><y xmlns=""></y></x></root>';
+    const xpath = "//*[local-name()='x']";
+    const expected = '<x xmlns="urn:A" xmlns:p="urn:p"><y xmlns=""></y></x>';
+
+    test_C14nCanonicalization(xml, xpath, expected);
+  });
+
+  it("C14n: Prefers the apex's own default namespace over the hoisted ancestor one", function () {
+    const xml = '<root xmlns="urn:A"><x xmlns:p="urn:p" xmlns="urn:B"><y></y></x></root>';
+    const xpath = "//*[local-name()='x']";
+    const expected = '<x xmlns="urn:B" xmlns:p="urn:p"><y></y></x>';
+
+    test_C14nCanonicalization(xml, xpath, expected);
+  });
 });

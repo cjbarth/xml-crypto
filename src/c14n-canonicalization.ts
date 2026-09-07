@@ -107,8 +107,7 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
       }
     } else if (defaultNs !== currNs) {
       //new default ns
-      newDefaultNs = node.namespaceURI || "";
-      res.push(' xmlns="', newDefaultNs, '"');
+      nsListToRender.push({ prefix: "", namespaceURI: currNs });
     }
 
     //handle the attributes namespace
@@ -138,30 +137,21 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
     }
 
     if (utils.isArrayHasLength(ancestorNamespaces)) {
-      // Remove namespaces which are already present in nsListToRender
+      // A declaration on this node shadows the ancestor one binding the same prefix, so the
+      // prefix alone decides, not the prefix and URI together.
       for (const ancestorNamespace of ancestorNamespaces) {
-        let alreadyListed = false;
-        for (const nsToRender of nsListToRender) {
-          if (
-            nsToRender.prefix === ancestorNamespace.prefix &&
-            nsToRender.namespaceURI === ancestorNamespace.namespaceURI
-          ) {
-            alreadyListed = true;
-          }
-        }
-
-        if (!alreadyListed) {
+        if (!nsListToRender.some((ns) => ns.prefix === ancestorNamespace.prefix)) {
           nsListToRender.push(ancestorNamespace);
         }
       }
     }
 
-    // Descendants are canonicalized against the ancestor default namespace hoisted onto this
-    // node, not the one that was in scope before it. C14N 1.0 §2.3
+    // Descendants are canonicalized against whichever default namespace this node renders,
+    // its own or one hoisted from an ancestor. C14N 1.0 §2.3
     // https://www.w3.org/TR/xml-c14n/#ProcessingModel
-    const hoistedDefaultNs = nsListToRender.find((ns) => !ns.prefix);
-    if (hoistedDefaultNs) {
-      newDefaultNs = hoistedDefaultNs.namespaceURI;
+    const renderedDefaultNs = nsListToRender.find((ns) => !ns.prefix);
+    if (renderedDefaultNs) {
+      newDefaultNs = renderedDefaultNs.namespaceURI;
     }
 
     nsListToRender.sort(this.nsCompare);
