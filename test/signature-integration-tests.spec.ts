@@ -223,4 +223,44 @@ describe("Signature integration tests", function () {
       "<library> should have two child nodes : <book> and <Signature>",
     ).to.equal(2);
   });
+  // C14N 1.0 §2.3 https://www.w3.org/TR/xml-c14n/#ProcessingModel
+  it("signed reference should not move an element into a namespace it was not signed in", function () {
+    const c14n = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
+    const xml = '<root xmlns="urn:A"><p:x xmlns:p="urn:p" Id="_1"><y xmlns=""></y></p:x></root>';
+
+    const sig = new SignedXml();
+    sig.privateKey = fs.readFileSync("./test/static/client.pem");
+    sig.canonicalizationAlgorithm = c14n;
+    sig.signatureAlgorithm = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
+    sig.addReference({
+      xpath: "//*[local-name(.)='x']",
+      digestAlgorithm: "http://www.w3.org/2000/09/xmldsig#sha1",
+      transforms: [c14n],
+    });
+    sig.computeSignature(xml);
+    const signed = sig.getSignedXml();
+
+    const signedDoc = new xmldom.DOMParser().parseFromString(signed);
+    const signature = xpath.select1("//*[local-name(.)='Signature']", signedDoc);
+    isDomNode.assertIsNodeLike(signature);
+
+    const verify = new SignedXml();
+    verify.publicCert = fs.readFileSync("./test/static/client_public.pem");
+    verify.loadSignature(signature);
+    expect(verify.checkSignature(signed)).to.be.true;
+
+    const yAsSigned = xpath.select1("//*[local-name(.)='y']", signedDoc);
+    isDomNode.assertIsElementNode(yAsSigned);
+    expect(yAsSigned.namespaceURI ?? "", "<y> is in no namespace in the signed document").to.equal(
+      "",
+    );
+
+    const trusted = new xmldom.DOMParser().parseFromString(verify.getSignedReferences()[0]);
+    const yAsTrusted = xpath.select1("//*[local-name(.)='y']", trusted);
+    isDomNode.assertIsElementNode(yAsTrusted);
+    expect(
+      yAsTrusted.namespaceURI ?? "",
+      "<y> must stay in no namespace in the signed reference",
+    ).to.equal("");
+  });
 });
