@@ -156,6 +156,14 @@ export class C14nCanonicalization implements CanonicalizationOrTransformationAlg
       }
     }
 
+    // Descendants are canonicalized against the ancestor default namespace hoisted onto this
+    // node, not the one that was in scope before it. C14N 1.0 §2.3
+    // https://www.w3.org/TR/xml-c14n/#ProcessingModel
+    const hoistedDefaultNs = nsListToRender.find((ns) => !ns.prefix);
+    if (hoistedDefaultNs) {
+      newDefaultNs = hoistedDefaultNs.namespaceURI;
+    }
+
     nsListToRender.sort(this.nsCompare);
 
     //render namespaces

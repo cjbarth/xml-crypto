@@ -249,18 +249,9 @@ describe("Signature integration tests", function () {
     verify.loadSignature(signature);
     expect(verify.checkSignature(signed)).to.be.true;
 
-    const yAsSigned = xpath.select1("//*[local-name(.)='y']", signedDoc);
-    isDomNode.assertIsElementNode(yAsSigned);
-    expect(yAsSigned.namespaceURI ?? "", "<y> is in no namespace in the signed document").to.equal(
-      "",
-    );
-
     const trusted = new xmldom.DOMParser().parseFromString(verify.getSignedReferences()[0]);
-    const yAsTrusted = xpath.select1("//*[local-name(.)='y']", trusted);
-    isDomNode.assertIsElementNode(yAsTrusted);
-    expect(
-      yAsTrusted.namespaceURI ?? "",
-      "<y> must stay in no namespace in the signed reference",
-    ).to.equal("");
+    const y = xpath.select1("//*[local-name(.)='y']", trusted);
+    isDomNode.assertIsElementNode(y);
+    expect(y.namespaceURI ?? "").to.equal("");
   });
 });

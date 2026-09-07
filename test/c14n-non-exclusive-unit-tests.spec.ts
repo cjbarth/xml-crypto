@@ -219,4 +219,13 @@ describe("C14N non-exclusive canonicalization tests", function () {
 
     test_C14nCanonicalization(xml, xpath, expected);
   });
+
+  // C14N 1.0 §2.3 https://www.w3.org/TR/xml-c14n/#ProcessingModel
+  it("C14n: Omits a descendant declaration made redundant by the hoisted ancestor default namespace", function () {
+    const xml = '<root xmlns="urn:A"><p:x xmlns:p="urn:p"><y xmlns="urn:A"></y></p:x></root>';
+    const xpath = "//*[local-name()='x']";
+    const expected = '<p:x xmlns="urn:A" xmlns:p="urn:p"><y></y></p:x>';
+
+    test_C14nCanonicalization(xml, xpath, expected);
+  });
 });
