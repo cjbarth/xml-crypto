@@ -242,7 +242,7 @@ If you keep failing verification, it is worth trying to guess such a hidden tran
 
 ```javascript
 var options = {
-  implicitTransforms: ["http://www.w3.org/TR/2001/REC-xml-c14n-20010315"],
+  implicitTransforms: ["http://www.w3.org/2001/10/xml-exc-c14n#"],
   publicCert: fs.readFileSync("client_public.pem"),
 };
 var sig = new SignedXml(options);
@@ -250,9 +250,14 @@ sig.loadSignature(signature);
 var res = sig.checkSignature(xml);
 ```
 
+Implicit transforms run after the ones a `<Reference>` declares, so they only take effect where the
+declared transforms stop short of canonical XML: when there are none, or when the last one is
+enveloped-signature. There they replace the Canonical XML 1.0 that would otherwise be applied, so
+listing `http://www.w3.org/TR/2001/REC-xml-c14n-20010315` itself changes nothing. After a declared
+canonicalization, implicit transforms have no effect.
+
 You might find it difficult to guess such transforms, but there are typical transforms you can try.
 
-- <http://www.w3.org/TR/2001/REC-xml-c14n-20010315>
 - <http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments>
 - <http://www.w3.org/2001/10/xml-exc-c14n#>
 - <http://www.w3.org/2001/10/xml-exc-c14n#WithComments>
@@ -269,7 +274,7 @@ See [xpath.js](https://github.com/yaronn/xpath.js) for usage. Note that this is 
 The `SignedXml` constructor provides an abstraction for sign and verify xml documents. The object is constructed using `new SignedXml(options?: SignedXmlOptions)` where the possible options are:
 
 - `idMode` - default `null` - if the value of `wssecurity` is passed it will create/validate id's with the ws-security namespace.
-- `idAttribute` - string - default `Id` or `ID` or `id` - the name of the attribute that contains the id of the element
+- `idAttribute` - string - default `undefined` - the name of an extra attribute that holds an element's id; it is checked before `Id`, `ID` and `id`, which stay recognized
 - `privateKey` - string or Buffer - default `null` - the private key to use for signing
 - `publicCert` - string or Buffer - default `null` - the public certificate to use for verifying
 - `signatureAlgorithm` - string - the signature algorithm to use

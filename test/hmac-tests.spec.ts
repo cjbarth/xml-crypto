@@ -73,4 +73,27 @@ describe("HMAC tests", function () {
     expect(result).to.be.true;
     expect(verify.getSignedReferences().length).to.equal(1);
   });
+
+  it("rejects an HMAC signature keyed with the public certificate unless HMAC is enabled", function () {
+    const publicCert = fs.readFileSync("./test/static/client_public.pem");
+    const forger = new SignedXml({
+      privateKey: publicCert,
+      canonicalizationAlgorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
+      signatureAlgorithm: "http://www.w3.org/2000/09/xmldsig#hmac-sha1",
+    });
+    forger.enableHMAC();
+    forger.addReference({
+      xpath: "//*[local-name(.)='book']",
+      digestAlgorithm: "http://www.w3.org/2001/04/xmlenc#sha256",
+      transforms: ["http://www.w3.org/2001/10/xml-exc-c14n#"],
+    });
+    forger.computeSignature("<library><book><name>Harry Potter</name></book></library>");
+
+    const verify = new SignedXml({ publicCert });
+    verify.loadSignature(forger.getSignatureXml());
+
+    expect(() => verify.checkSignature(forger.getSignedXml())).to.throw(
+      "signature algorithm 'http://www.w3.org/2000/09/xmldsig#hmac-sha1' is not supported",
+    );
+  });
 });
