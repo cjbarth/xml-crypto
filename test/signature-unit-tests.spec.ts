@@ -1,6 +1,6 @@
 import * as xpath from "xpath";
 import * as xmldom from "@xmldom/xmldom";
-import { SignedXml, createOptionalCallbackFunction } from "../src/index";
+import { SignedXml, createOptionalCallbackFunction, findAncestorNs } from "../src/index";
 import * as fs from "fs";
 import * as crypto from "crypto";
 import { expect } from "chai";
@@ -1448,5 +1448,96 @@ describe("Signature unit tests", function () {
     expect(uriAttribute, "Reference element should have the correct URI attribute value").to.equal(
       "#unique-id",
     );
+  });
+
+  describe("Algorithm attributes", function () {
+    const c14n = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
+    const rsaSha256 = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
+    const sha256 = "http://www.w3.org/2001/04/xmlenc#sha256";
+    const privateKey = fs.readFileSync("./test/static/client.pem");
+
+    function sign(): string {
+      const sig = new SignedXml({
+        privateKey,
+        canonicalizationAlgorithm: c14n,
+        signatureAlgorithm: rsaSha256,
+      });
+      sig.addReference({
+        xpath: "//*[local-name(.)='book']",
+        transforms: ["http://www.w3.org/2000/09/xmldsig#enveloped-signature", c14n],
+        digestAlgorithm: sha256,
+      });
+      sig.computeSignature("<library><book><title>Harry Potter</title></book></library>");
+      return sig.getSignedXml();
+    }
+
+    function setAlgorithm(xml: string, element: string, from: string, to: string): string {
+      const needle = `<${element} Algorithm="${from}"`;
+      expect(xml).to.include(needle);
+      return xml.replace(needle, `<${element} Algorithm="${to}"`);
+    }
+
+    function signSignedInfoAgain(xml: string): string {
+      const doc = new xmldom.DOMParser().parseFromString(xml);
+      const signedInfo = xpath.select1("//*[local-name(.)='SignedInfo']", doc);
+      isDomNode.assertIsNodeLike(signedInfo);
+      const canonSignedInfo = new SignedXml().getCanonXml([c14n], signedInfo, {
+        ancestorNamespaces: findAncestorNs(doc, "//*[local-name(.)='SignedInfo']"),
+      });
+      const signatureValue = crypto
+        .createSign("RSA-SHA256")
+        .update(canonSignedInfo)
+        .sign(privateKey, "base64");
+      return xml.replace(/<SignatureValue>[^<]*/, `<SignatureValue>${signatureValue}`);
+    }
+
+    function verify(xml: string): boolean {
+      const doc = new xmldom.DOMParser().parseFromString(xml);
+      const signature = xpath.select1("//*[local-name(.)='Signature']", doc);
+      isDomNode.assertIsNodeLike(signature);
+      const sig = new SignedXml({ publicCert: fs.readFileSync("./test/static/client_public.pem") });
+      sig.loadSignature(signature);
+      return sig.checkSignature(xml);
+    }
+
+    // A literal line break in an attribute reaches us as a space; a character reference survives
+    // as a tab, CR or LF. https://www.w3.org/TR/xml/#AVNormalize
+    const pad = (uri: string) => `\n    &#x9;${uri}&#xD;&#xA;\n    `;
+
+    for (const [element, uri] of Object.entries({
+      CanonicalizationMethod: c14n,
+      SignatureMethod: rsaSha256,
+      Transform: c14n,
+      DigestMethod: sha256,
+    })) {
+      it(`verifies a signature whose ${element} Algorithm the signer padded with whitespace`, function () {
+        const xml = signSignedInfoAgain(setAlgorithm(sign(), element, uri, pad(uri)));
+
+        expect(verify(xml)).to.be.true;
+      });
+    }
+
+    it("rejects a signature whose Algorithm was padded with whitespace after signing", function () {
+      const xml = setAlgorithm(sign(), "SignatureMethod", rsaSha256, pad(rsaSha256));
+
+      expect(() => verify(xml)).to.throw(
+        /^invalid signature: the signature value .* is incorrect$/,
+      );
+    });
+
+    it("rejects an Algorithm with whitespace inside the identifier", function () {
+      const xml = signSignedInfoAgain(
+        setAlgorithm(
+          sign(),
+          "DigestMethod",
+          sha256,
+          "http://www.w3.org/2001/04/xmlenc#\n\t sha256",
+        ),
+      );
+
+      expect(() => verify(xml)).to.throw(
+        "hash algorithm 'http://www.w3.org/2001/04/xmlenc# sha256' is not supported",
+      );
+    });
   });
 });

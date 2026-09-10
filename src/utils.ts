@@ -6,6 +6,14 @@ export function isArrayHasLength(array: unknown): array is unknown[] {
   return Array.isArray(array) && array.length > 0;
 }
 
+// `xsd:anyURI` is whitespace-collapsed: https://www.w3.org/TR/xmlschema-2/#rf-whiteSpace
+export function collapseWhitespace(value: string): string {
+  return value
+    .split(/[\t\n\r ]+/)
+    .filter((token) => token.length > 0)
+    .join(" ");
+}
+
 function attrEqualsExplicitly(attr: Attr, localName: string, namespace?: string) {
   return attr.localName === localName && (attr.namespaceURI === namespace || namespace == null);
 }
