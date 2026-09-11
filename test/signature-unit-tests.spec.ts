@@ -1,10 +1,11 @@
 import * as xpath from "xpath";
 import * as xmldom from "@xmldom/xmldom";
-import { SignedXml, createOptionalCallbackFunction, findAncestorNs } from "../src/index";
+import { SignedXml, createOptionalCallbackFunction } from "../src/index";
 import * as fs from "fs";
 import * as crypto from "crypto";
 import { expect } from "chai";
 import * as isDomNode from "@xmldom/is-dom-node";
+import { signSignedInfoAgain } from "./signed-info";
 
 const signatureAlgorithms = [
   "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
@@ -1620,20 +1621,6 @@ describe("Signature unit tests", function () {
       return xml.replace(needle, `<${element} Algorithm="${to}"`);
     }
 
-    function signSignedInfoAgain(xml: string): string {
-      const doc = new xmldom.DOMParser().parseFromString(xml);
-      const signedInfo = xpath.select1("//*[local-name(.)='SignedInfo']", doc);
-      isDomNode.assertIsNodeLike(signedInfo);
-      const canonSignedInfo = new SignedXml().getCanonXml([c14n], signedInfo, {
-        ancestorNamespaces: findAncestorNs(doc, "//*[local-name(.)='SignedInfo']"),
-      });
-      const signatureValue = crypto
-        .createSign("RSA-SHA256")
-        .update(canonSignedInfo)
-        .sign(privateKey, "base64");
-      return xml.replace(/<SignatureValue>[^<]*/, `<SignatureValue>${signatureValue}`);
-    }
-
     function verify(xml: string): boolean {
       const doc = new xmldom.DOMParser().parseFromString(xml);
       const signature = xpath.select1("//*[local-name(.)='Signature']", doc);
@@ -1654,7 +1641,11 @@ describe("Signature unit tests", function () {
       DigestMethod: sha256,
     })) {
       it(`verifies a signature whose ${element} Algorithm the signer padded with whitespace`, function () {
-        const xml = signSignedInfoAgain(setAlgorithm(sign(), element, uri, pad(uri)));
+        const xml = signSignedInfoAgain(
+          setAlgorithm(sign(), element, uri, pad(uri)),
+          c14n,
+          privateKey,
+        );
 
         expect(verify(xml)).to.be.true;
       });
@@ -1676,6 +1667,8 @@ describe("Signature unit tests", function () {
           sha256,
           "http://www.w3.org/2001/04/xmlenc#\n\t sha256",
         ),
+        c14n,
+        privateKey,
       );
 
       expect(() => verify(xml)).to.throw(

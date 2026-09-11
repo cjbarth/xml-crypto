@@ -1,10 +1,10 @@
 import * as xpath from "xpath";
 import * as xmldom from "@xmldom/xmldom";
-import { SignedXml, findAncestorNs, type SignedXmlOptions } from "../src/index";
-import * as crypto from "crypto";
+import { SignedXml, type SignedXmlOptions } from "../src/index";
 import * as fs from "fs";
 import { expect } from "chai";
 import * as isDomNode from "@xmldom/is-dom-node";
+import { signSignedInfoAgain } from "./signed-info";
 
 describe("Signature integration tests", function () {
   function verifySignature(xml, expected, xpath, canonicalizationAlgorithm) {
@@ -459,21 +459,7 @@ describe("Signature integration tests", function () {
         // SignedInfo again.
         const undeclared = declared.replace(`<Transform Algorithm="${exclusiveC14n}"/>`, "");
         expect(undeclared).to.not.equal(declared);
-
-        const doc = new xmldom.DOMParser().parseFromString(undeclared);
-        const signedInfo = xpath.select1("//*[local-name(.)='SignedInfo']", doc);
-        isDomNode.assertIsNodeLike(signedInfo);
-        const canonSignedInfo = new SignedXml().getCanonXml([exclusiveC14n], signedInfo, {
-          ancestorNamespaces: findAncestorNs(doc, "//*[local-name(.)='SignedInfo']"),
-        });
-        const signatureValue = crypto
-          .createSign("RSA-SHA256")
-          .update(canonSignedInfo)
-          .sign(privateKey, "base64");
-        const signed = undeclared.replace(
-          /<SignatureValue>[^<]*/,
-          `<SignatureValue>${signatureValue}`,
-        );
+        const signed = signSignedInfoAgain(undeclared, exclusiveC14n, privateKey);
 
         expect(verifier(signed, {}).checkSignature(signed)).to.be.false;
         const sig = verifier(signed, { implicitTransforms: [exclusiveC14n] });
